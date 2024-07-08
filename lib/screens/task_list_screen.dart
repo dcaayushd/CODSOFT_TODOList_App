@@ -4,6 +4,7 @@ import 'package:todolist_app/providers/task_provider.dart';
 import 'package:todolist_app/providers/theme_provider.dart';
 import 'package:todolist_app/widgets/task_list_item.dart';
 import 'package:todolist_app/widgets/add_task_dialog.dart';
+import 'package:intl/intl.dart';
 
 class TaskListScreen extends StatefulWidget {
   @override
@@ -57,29 +58,54 @@ class _TaskListScreenState extends State<TaskListScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              ElevatedButton(
+              TextButton(
                 onPressed: () {
                   setState(() {
                     _showCompleted = false;
                   });
                 },
-                child: Text('Remaining'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: !_showCompleted ? Colors.blue : Colors.grey,
+                child: Text('Pending'),
+                style: TextButton.styleFrom(
+                  foregroundColor: !_showCompleted
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey,
                 ),
               ),
-              ElevatedButton(
+              TextButton(
                 onPressed: () {
                   setState(() {
                     _showCompleted = true;
                   });
                 },
                 child: Text('Completed'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _showCompleted ? Colors.blue : Colors.grey,
+                style: TextButton.styleFrom(
+                  foregroundColor: _showCompleted
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey,
                 ),
               ),
             ],
+          ),
+          Container(
+            height: 2,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    color: !_showCompleted
+                        ? Theme.of(context).primaryColor
+                        : Colors.transparent,
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    color: _showCompleted
+                        ? Theme.of(context).primaryColor
+                        : Colors.transparent,
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: Consumer<TaskProvider>(

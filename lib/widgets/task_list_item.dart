@@ -1,63 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todolist_app/models/task.dart';
+import 'package:todolist_app/providers/task_provider.dart';
 import 'package:todolist_app/widgets/edit_task_dialog.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-
-import '../providers/task_provider.dart';
+import 'package:intl/intl.dart';
 
 class TaskListItem extends StatelessWidget {
   final Task task;
 
   const TaskListItem({Key? key, required this.task}) : super(key: key);
 
+  Color _getCategoryColor() {
+    switch (task.category) {
+      case 'Personal':
+        return Colors.blue;
+      case 'Work':
+        return Colors.red;
+      case 'Shopping':
+        return Colors.green;
+      default:
+        return Colors.orange;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Slidable(
-      endActionPane: ActionPane(
-        motion: ScrollMotion(),
-        children: [
-          SlidableAction(
-            onPressed: (context) {
-              Provider.of<TaskProvider>(context, listen: false)
-                  .deleteTask(task.id);
-            },
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-            icon: Icons.delete,
-            label: 'Delete',
-          ),
-        ],
-      ),
-      child: Card(
-        elevation: 2,
-        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: ListTile(
-          leading: Checkbox(
-            value: task.isCompleted,
-            onChanged: (bool? value) {
-              Provider.of<TaskProvider>(context, listen: false)
-                  .toggleTaskCompletion(task.id);
-            },
-          ),
-          title: Text(
-            task.title,
-            style: TextStyle(
-              decoration: task.isCompleted
-                  ? TextDecoration.lineThrough
-                  : TextDecoration.none,
-            ),
-          ),
-          trailing: IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => EditTaskDialog(task: task),
-              );
-            },
+    return Card(
+      elevation: 2,
+      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        leading: Checkbox(
+          value: task.isCompleted,
+          onChanged: (bool? value) {
+            Provider.of<TaskProvider>(context, listen: false)
+                .toggleTaskCompletion(task.id);
+          },
+        ),
+        title: Text(
+          task.title,
+          style: TextStyle(
+            decoration: task.isCompleted
+                ? TextDecoration.lineThrough
+                : TextDecoration.none,
           ),
         ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(task.description),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.category, size: 16),
+                SizedBox(width: 4),
+                Text(task.category),
+                SizedBox(width: 8),
+                Icon(Icons.access_time, size: 16),
+                SizedBox(width: 4),
+                Text(task.dueDate != null
+                    ? DateFormat('MMM d, y HH:mm').format(task.dueDate!)
+                    : 'No due date'),
+              ],
+            ),
+          ],
+        ),
+        trailing: IconButton(
+          icon: Icon(Icons.edit),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => EditTaskDialog(task: task),
+            );
+          },
+        ),
+        tileColor: _getCategoryColor().withOpacity(0.1),
       ),
     );
   }
