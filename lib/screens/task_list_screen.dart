@@ -77,12 +77,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     _showCompleted = true;
                   });
                 },
-                child: Text('Completed'),
                 style: TextButton.styleFrom(
                   foregroundColor: _showCompleted
                       ? Theme.of(context).primaryColor
                       : Colors.grey,
+
                 ),
+                child: Text('Completed'),
               ),
             ],
           ),
