@@ -2,11 +2,15 @@ import 'package:todolist_app/models/task.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskService {
-  final List<Task> _tasks = [];
-  final _uuid = const Uuid();
+  List<Task> _tasks = [];
+  final _uuid = Uuid();
 
   List<Task> getTasks() {
     return List.unmodifiable(_tasks);
+  }
+
+  void setTasks(List<Task> tasks) {
+    _tasks = tasks;
   }
 
   void addTask(String title) {
@@ -27,8 +31,7 @@ class TaskService {
   void toggleTaskCompletion(String id) {
     final index = _tasks.indexWhere((task) => task.id == id);
     if (index != -1) {
-      _tasks[index] =
-          _tasks[index].copyWith(isCompleted: !_tasks[index].isCompleted);
+      _tasks[index] = _tasks[index].copyWith(isCompleted: !_tasks[index].isCompleted);
     }
   }
 }

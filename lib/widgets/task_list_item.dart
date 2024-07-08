@@ -3,29 +3,34 @@ import 'package:provider/provider.dart';
 import 'package:todolist_app/models/task.dart';
 import 'package:todolist_app/providers/task_provider.dart';
 import 'package:todolist_app/widgets/edit_task_dialog.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 class TaskListItem extends StatelessWidget {
   final Task task;
 
-  const TaskListItem({super.key, required this.task});
+  const TaskListItem({Key? key, required this.task}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Dismissible(
-      key: Key(task.id),
-      background: Container(
-        color: Colors.red,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete, color: Colors.white),
+    return Slidable(
+      endActionPane: ActionPane(
+        motion: ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              Provider.of<TaskProvider>(context, listen: false)
+                  .deleteTask(task.id);
+            },
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+          ),
+        ],
       ),
-      direction: DismissDirection.endToStart,
-      onDismissed: (direction) {
-        Provider.of<TaskProvider>(context, listen: false).deleteTask(task.id);
-      },
       child: Card(
         elevation: 2,
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: ListTile(
           leading: Checkbox(
             value: task.isCompleted,
@@ -43,7 +48,7 @@ class TaskListItem extends StatelessWidget {
             ),
           ),
           trailing: IconButton(
-            icon: const Icon(Icons.edit),
+            icon: Icon(Icons.edit),
             onPressed: () {
               showDialog(
                 context: context,
