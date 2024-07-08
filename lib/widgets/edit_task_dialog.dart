@@ -15,7 +15,6 @@ class EditTaskDialog extends StatefulWidget {
 }
 
 class _EditTaskDialogState extends State<EditTaskDialog> {
-  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late String _selectedCategory;
@@ -26,11 +25,25 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task.title);
-    _descriptionController = TextEditingController(text: widget.task.description);
+    _descriptionController =
+        TextEditingController(text: widget.task.description);
     _selectedCategory = widget.task.category;
     if (widget.task.dueDate != null) {
       _selectedDate = widget.task.dueDate;
       _selectedTime = TimeOfDay.fromDateTime(widget.task.dueDate!);
+    }
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'Learning':
+        return Colors.blue;
+      case 'Working':
+        return Colors.red;
+      case 'General':
+        return Colors.green;
+      default:
+        return Colors.orange;
     }
   }
 
@@ -40,99 +53,140 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
 
     return AlertDialog(
       title: Text('Edit Task'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(labelText: 'Title'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoTextField(
+              controller: _titleController,
+              placeholder: 'Title',
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey6,
+                borderRadius: BorderRadius.circular(8),
               ),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+              style: TextStyle(color: CupertinoColors.label),
+            ),
+            SizedBox(height: 8),
+            CupertinoTextField(
+              controller: _descriptionController,
+              placeholder: 'Description',
+              padding: EdgeInsets.all(8),
+              maxLines: 3,
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey6,
+                borderRadius: BorderRadius.circular(8),
               ),
-              SizedBox(height: 16),
-              Text('Category', style: Theme.of(context).textTheme.titleMedium),
-              Wrap(
-                spacing: 8,
-                children: taskProvider.categories.map((category) {
-                  return ChoiceChip(
-                    label: Text(category),
-                    selected: _selectedCategory == category,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = category;
-                      });
-                    },
-                    backgroundColor:
-                        _getCategoryColor(category).withOpacity(0.1),
-                    selectedColor: _getCategoryColor(category).withOpacity(0.3),
-                  );
-                }).toList(),
+              style: TextStyle(color: CupertinoColors.label),
+            ),
+            SizedBox(height: 16),
+            Text('Category',
+                style: CupertinoTheme.of(context).textTheme.textStyle),
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: taskProvider.categories.map((category) {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategory = category;
+                        });
+                      },
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        margin: EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: _selectedCategory == category
+                              ? _getCategoryColor(category)
+                              : CupertinoColors.systemGrey5,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          category,
+                          style: TextStyle(
+                            color: _selectedCategory == category
+                                ? CupertinoColors.white
+                                : CupertinoColors.black,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => _showDatePicker(context),
-                      child: Text(_selectedDate == null
-                          ? 'Select Date'
-                          : DateFormat('MMM d, y').format(_selectedDate!)),
-                    ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _showDatePicker(context),
+                    child: Text(_selectedDate == null
+                        ? 'Select Date'
+                        : DateFormat('MMM d, y').format(_selectedDate!)),
                   ),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => _showTimePicker(context),
-                      child: Text(_selectedTime == null
-                          ? 'Select Time'
-                          : _selectedTime!.format(context)),
-                    ),
+                ),
+                Expanded(
+                  child: CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _showTimePicker(context),
+                    child: Text(_selectedTime == null
+                        ? 'Select Time'
+                        : _selectedTime!.format(context)),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
       actions: [
-        TextButton(
-          child: Text('Cancel'),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        ElevatedButton(
-          child: Text('Save'),
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              final updatedTask = Task(
-                id: widget.task.id,
-                title: _titleController.text,
-                description: _descriptionController.text,
-                category: _selectedCategory,
-                dueDate: _selectedDate != null && _selectedTime != null
-                    ? DateTime(
-                        _selectedDate!.year,
-                        _selectedDate!.month,
-                        _selectedDate!.day,
-                        _selectedTime!.hour,
-                        _selectedTime!.minute,
-                      )
-                    : null,
-                isCompleted: widget.task.isCompleted,
-              );
-              taskProvider.updateTask(updatedTask);
-              Navigator.of(context).pop();
-            }
-          },
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SizedBox(
+              width: 80,
+              child: CupertinoDialogAction(
+                child: Text('Cancel'),
+                onPressed: () => Navigator.of(context).pop(),
+                isDestructiveAction: true,
+              ),
+            ),
+            SizedBox(
+              width: 80,
+              child: CupertinoDialogAction(
+                child: Text('Save'),
+                isDefaultAction: true,
+                onPressed: () {
+                  if (_titleController.text.isNotEmpty) {
+                    final updatedTask = Task(
+                      id: widget.task.id,
+                      title: _titleController.text,
+                      description: _descriptionController.text,
+                      category: _selectedCategory,
+                      dueDate: _selectedDate != null && _selectedTime != null
+                          ? DateTime(
+                              _selectedDate!.year,
+                              _selectedDate!.month,
+                              _selectedDate!.day,
+                              _selectedTime!.hour,
+                              _selectedTime!.minute,
+                            )
+                          : null,
+                      isCompleted: widget.task.isCompleted,
+                    );
+                    taskProvider.updateTask(updatedTask);
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -143,10 +197,12 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       context: context,
       builder: (_) => Container(
         height: 200,
-        color: Colors.white,
+        color: CupertinoTheme.of(context).brightness == Brightness.light
+            ? CupertinoColors.systemBackground
+            : Colors.black,
         child: CupertinoDatePicker(
           mode: CupertinoDatePickerMode.date,
-          initialDateTime: _selectedDate ?? DateTime.now(),
+          initialDateTime: DateTime.now(),
           onDateTimeChanged: (val) {
             setState(() {
               _selectedDate = val;
@@ -162,12 +218,12 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       context: context,
       builder: (_) => Container(
         height: 200,
-        color: Colors.white,
+        color: CupertinoTheme.of(context).brightness == Brightness.light
+            ? CupertinoColors.systemBackground
+            : Colors.black,
         child: CupertinoDatePicker(
           mode: CupertinoDatePickerMode.time,
-          initialDateTime: _selectedTime != null
-              ? DateTime(2021, 1, 1, _selectedTime!.hour, _selectedTime!.minute)
-              : DateTime.now(),
+          initialDateTime: DateTime.now(),
           onDateTimeChanged: (val) {
             setState(() {
               _selectedTime = TimeOfDay.fromDateTime(val);
@@ -176,18 +232,5 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         ),
       ),
     );
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Personal':
-        return Colors.blue;
-      case 'Work':
-        return Colors.red;
-      case 'Shopping':
-        return Colors.green;
-      default:
-        return Colors.orange;
-    }
   }
 }
