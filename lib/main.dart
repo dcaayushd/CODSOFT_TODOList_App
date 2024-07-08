@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todolist_app/providers/task_provider.dart';
-import 'package:todolist_app/providers/theme.provider.dart';
-
+import 'package:todolist_app/providers/theme_provider.dart';
 import 'package:todolist_app/screens/task_list_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -29,6 +28,7 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
+          debugShowCheckedModeBanner: false,
           title: 'Todo List App',
           theme: ThemeData(
             brightness: Brightness.light,

@@ -1,9 +1,7 @@
 import 'package:todolist_app/models/task.dart';
-import 'package:uuid/uuid.dart';
 
 class TaskService {
   List<Task> _tasks = [];
-  final _uuid = Uuid();
 
   List<Task> getTasks() {
     return List.unmodifiable(_tasks);
@@ -13,14 +11,14 @@ class TaskService {
     _tasks = tasks;
   }
 
-  void addTask(String title) {
-    _tasks.add(Task(id: _uuid.v4(), title: title));
+  void addTask(Task task) {
+    _tasks.add(task);
   }
 
-  void updateTask(String id, String title) {
-    final index = _tasks.indexWhere((task) => task.id == id);
+  void updateTask(Task updatedTask) {
+    final index = _tasks.indexWhere((task) => task.id == updatedTask.id);
     if (index != -1) {
-      _tasks[index] = _tasks[index].copyWith(title: title);
+      _tasks[index] = updatedTask;
     }
   }
 

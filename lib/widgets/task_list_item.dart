@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todolist_app/models/task.dart';
-import 'package:todolist_app/providers/task_provider.dart';
 import 'package:todolist_app/widgets/edit_task_dialog.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+
+import '../providers/task_provider.dart';
 
 class TaskListItem extends StatelessWidget {
   final Task task;

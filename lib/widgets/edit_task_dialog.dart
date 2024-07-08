@@ -8,7 +8,7 @@ class EditTaskDialog extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
 
-  EditTaskDialog({super.key, required this.task}) {
+  EditTaskDialog({Key? key, required this.task}) : super(key: key) {
     _titleController = TextEditingController(text: task.title);
   }
 
@@ -42,7 +42,7 @@ class EditTaskDialog extends StatelessWidget {
           onPressed: () {
             if (_formKey.currentState!.validate()) {
               Provider.of<TaskProvider>(context, listen: false)
-                  .updateTask(task.id, _titleController.text);
+                  .updateTask(task);
               Navigator.of(context).pop();
             }
           },
