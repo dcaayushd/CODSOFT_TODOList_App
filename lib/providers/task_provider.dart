@@ -8,13 +8,15 @@ import 'dart:convert';
 class TaskProvider with ChangeNotifier {
   final TaskService _taskService = TaskService();
   final NotificationService _notificationService = NotificationService();
-  List<String> _categories = ['Personal', 'Work', 'Shopping', 'Other'];
+  List<String> _categories = ['Learning', 'Working', 'General', 'Other'];
 
   List<Task> get tasks => _taskService.getTasks();
   List<String> get categories => _categories;
 
-  List<Task> get completedTasks => tasks.where((task) => task.isCompleted).toList();
-  List<Task> get remainingTasks => tasks.where((task) => !task.isCompleted).toList();
+  List<Task> get completedTasks =>
+      tasks.where((task) => task.isCompleted).toList();
+  List<Task> get remainingTasks =>
+      tasks.where((task) => !task.isCompleted).toList();
 
   TaskProvider() {
     _notificationService.init();
@@ -35,9 +37,8 @@ class TaskProvider with ChangeNotifier {
 
   Future<void> _saveTasks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> taskStrings = tasks
-        .map((task) => json.encode(task.toJson()))
-        .toList();
+    List<String> taskStrings =
+        tasks.map((task) => json.encode(task.toJson())).toList();
     await prefs.setStringList('tasks', taskStrings);
     await prefs.setStringList('categories', _categories);
   }
@@ -86,8 +87,10 @@ class TaskProvider with ChangeNotifier {
   }
 
   List<Task> searchTasks(String query) {
-    return tasks.where((task) =>
-        task.title.toLowerCase().contains(query.toLowerCase()) ||
-        task.description.toLowerCase().contains(query.toLowerCase())).toList();
+    return tasks
+        .where((task) =>
+            task.title.toLowerCase().contains(query.toLowerCase()) ||
+            task.description.toLowerCase().contains(query.toLowerCase()))
+        .toList();
   }
 }
