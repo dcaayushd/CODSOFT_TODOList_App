@@ -4,7 +4,6 @@ import 'package:todolist_app/providers/task_provider.dart';
 import 'package:todolist_app/providers/theme_provider.dart';
 import 'package:todolist_app/widgets/task_list_item.dart';
 import 'package:todolist_app/widgets/add_task_dialog.dart';
-import 'package:intl/intl.dart';
 
 class TaskListScreen extends StatefulWidget {
   @override
@@ -64,7 +63,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     _showCompleted = false;
                   });
                 },
-                child: Text('Pending'),
+                child: Text('Pending Tasks'),
                 style: TextButton.styleFrom(
                   foregroundColor: !_showCompleted
                       ? Theme.of(context).primaryColor
@@ -81,9 +80,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   foregroundColor: _showCompleted
                       ? Theme.of(context).primaryColor
                       : Colors.grey,
-
                 ),
-                child: Text('Completed'),
+                child: Text('Completed Tasks'),
               ),
             ],
           ),
@@ -127,7 +125,20 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   itemCount: filteredTasks.length,
                   itemBuilder: (context, index) {
                     final task = filteredTasks[index];
-                    return TaskListItem(task: task);
+                    return Dismissible(
+                      key: Key(task.id),
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: EdgeInsets.only(right: 20),
+                        child: Icon(Icons.delete, color: Colors.white),
+                      ),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (direction) {
+                        taskProvider.deleteTask(task.id);
+                      },
+                      child: TaskListItem(task: task),
+                    );
                   },
                 );
               },
