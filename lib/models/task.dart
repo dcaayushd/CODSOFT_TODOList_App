@@ -7,6 +7,7 @@ class Task {
   String category;
   DateTime? dueDate;
   bool isCompleted;
+  final DateTime createdAt;
 
   Task({
     String? id,
@@ -15,7 +16,10 @@ class Task {
     required this.category,
     this.dueDate,
     this.isCompleted = false,
-  }) : id = id ?? Uuid().v4();
+    DateTime? createdAt,
+  }) : 
+    id = id ?? Uuid().v4(),
+    createdAt = createdAt ?? DateTime.now();
 
   Task copyWith({
     String? title,
@@ -31,6 +35,7 @@ class Task {
       category: category ?? this.category,
       dueDate: dueDate ?? this.dueDate,
       isCompleted: isCompleted ?? this.isCompleted,
+      createdAt: this.createdAt,
     );
   }
 
@@ -42,6 +47,7 @@ class Task {
       'category': category,
       'dueDate': dueDate?.toIso8601String(),
       'isCompleted': isCompleted,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
@@ -53,6 +59,7 @@ class Task {
       category: json['category'] as String? ?? 'Other',
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate'] as String) : null,
       isCompleted: json['isCompleted'] as bool? ?? false,
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
     );
   }
 }

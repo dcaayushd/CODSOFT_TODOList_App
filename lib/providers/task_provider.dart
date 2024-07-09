@@ -9,14 +9,26 @@ class TaskProvider with ChangeNotifier {
   final TaskService _taskService = TaskService();
   final NotificationService _notificationService = NotificationService();
   List<String> _categories = ['Learning', 'Working', 'General', 'Other'];
-
-  List<Task> get tasks => _taskService.getTasks();
+  
+  List<Task> get tasks => List.from(_taskService.getTasks());
   List<String> get categories => _categories;
+  
+  List<Task> _sortTasks(List<Task> tasks) {
+    List<Task> sortedTasks = List.from(tasks); 
+    sortedTasks.sort((a, b) {
+      if (a.dueDate == null && b.dueDate == null) return 0;
+      if (a.dueDate == null) return 1;
+      if (b.dueDate == null) return -1;
+      return a.dueDate!.compareTo(b.dueDate!);
+    });
+    return sortedTasks;
+  }
 
   List<Task> get completedTasks =>
-      tasks.where((task) => task.isCompleted).toList();
+      _sortTasks(tasks.where((task) => task.isCompleted).toList());
+  
   List<Task> get remainingTasks =>
-      tasks.where((task) => !task.isCompleted).toList();
+      _sortTasks(tasks.where((task) => !task.isCompleted).toList());
 
   TaskProvider() {
     _notificationService.init();
@@ -48,6 +60,11 @@ class TaskProvider with ChangeNotifier {
     _notificationService.scheduleNotification(task);
     _saveTasks();
     notifyListeners();
+
+    // Schedule a re-sort after 1 minute
+    Future.delayed(Duration(minutes: 1), () {
+      notifyListeners();
+    });
   }
 
   void updateTask(Task updatedTask) {
@@ -87,10 +104,10 @@ class TaskProvider with ChangeNotifier {
   }
 
   List<Task> searchTasks(String query) {
-    return tasks
+    return _sortTasks(tasks
         .where((task) =>
             task.title.toLowerCase().contains(query.toLowerCase()) ||
             task.description.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+        .toList());
   }
 }
