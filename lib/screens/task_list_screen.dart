@@ -63,10 +63,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     _showCompleted = false;
                   });
                 },
-                child: Text('Pending Tasks'),
+                child: Text(
+                  'Pending Tasks',
+                ),
                 style: TextButton.styleFrom(
                   foregroundColor: !_showCompleted
-                      ? Theme.of(context).primaryColor
+                      ? Theme.of(context).colorScheme.secondary
                       : Colors.grey,
                 ),
               ),
@@ -78,7 +80,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: _showCompleted
-                      ? Theme.of(context).primaryColor
+                      ? Theme.of(context).colorScheme.secondary
                       : Colors.grey,
                 ),
                 child: Text('Completed Tasks'),
@@ -92,14 +94,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 Expanded(
                   child: Container(
                     color: !_showCompleted
-                        ? Theme.of(context).primaryColor
+                        ? Theme.of(context).colorScheme.secondary
                         : Colors.transparent,
                   ),
                 ),
                 Expanded(
                   child: Container(
                     color: _showCompleted
-                        ? Theme.of(context).primaryColor
+                        ? Theme.of(context).colorScheme.secondary
                         : Colors.transparent,
                   ),
                 ),
@@ -146,14 +148,15 @@ class _TaskListScreenState extends State<TaskListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           showDialog(
             context: context,
             builder: (context) => AddTaskDialog(),
           );
         },
-        child: Icon(Icons.add),
+        icon: Icon(Icons.add),
+        label: Text('Add Task'),
       ),
     );
   }
