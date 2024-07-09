@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todolist_app/models/task.dart';
@@ -25,6 +26,7 @@ class TaskListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Card(
       elevation: 2,
       margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -42,6 +44,12 @@ class TaskListItem extends StatelessWidget {
             decoration: task.isCompleted
                 ? TextDecoration.lineThrough
                 : TextDecoration.none,
+            decorationColor: task.isCompleted
+                ? brightness == Brightness.light
+                    ? _getCategoryColor().withOpacity(1)
+                    : CupertinoColors.black
+                : null,
+            decorationThickness: 3,
           ),
         ),
         subtitle: Column(
