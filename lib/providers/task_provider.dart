@@ -4,6 +4,7 @@ import 'package:todolist_app/services/task_service.dart';
 import 'package:todolist_app/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 class TaskProvider with ChangeNotifier {
   final TaskService _taskService = TaskService();
@@ -104,10 +105,38 @@ class TaskProvider with ChangeNotifier {
   }
 
   List<Task> searchTasks(String query) {
-    return _sortTasks(tasks
-        .where((task) =>
-            task.title.toLowerCase().contains(query.toLowerCase()) ||
-            task.description.toLowerCase().contains(query.toLowerCase()))
-        .toList());
+    final formattedQuery = query.toLowerCase();
+
+    DateTime? parseDate(String input) {
+      List<String> formats = [
+        'MMM', 'MMMM', 'MM', 'yyyy-MM-dd', 'yyyy/MM/dd', 'MM-dd', 'MM/dd'
+      ];
+
+      for (var format in formats) {
+        try {
+          DateFormat dateFormat = DateFormat(format);
+          return dateFormat.parseStrict(input);
+        } catch (_) {
+          continue;
+        }
+      }
+
+      return null;
+    }
+
+    DateTime? searchDate = parseDate(formattedQuery);
+
+    return _sortTasks(tasks.where((task) {
+      final taskTitle = task.title.toLowerCase();
+      final taskDescription = task.description.toLowerCase();
+      final taskDueDate = task.dueDate;
+      final taskDueDateString = taskDueDate != null ? DateFormat('MMM d, y').format(taskDueDate).toLowerCase() : '';
+
+      bool matchesQuery = taskTitle.contains(formattedQuery) ||
+                          taskDescription.contains(formattedQuery) ||
+                          (taskDueDate != null && (taskDueDateString.contains(formattedQuery) || taskDueDate == searchDate));
+
+      return matchesQuery;
+    }).toList());
   }
 }
