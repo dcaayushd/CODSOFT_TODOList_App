@@ -5,6 +5,8 @@ import 'package:todolist_app/models/task.dart';
 import 'package:todolist_app/providers/task_provider.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/utils.dart';
+
 class EditTaskDialog extends StatefulWidget {
   final Task task;
 
@@ -31,19 +33,6 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     if (widget.task.dueDate != null) {
       _selectedDate = widget.task.dueDate;
       _selectedTime = TimeOfDay.fromDateTime(widget.task.dueDate!);
-    }
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Learning':
-        return Colors.blue;
-      case 'Working':
-        return Colors.red;
-      case 'General':
-        return Colors.green;
-      default:
-        return Colors.orange;
     }
   }
 
@@ -101,7 +90,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                         margin: EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           color: _selectedCategory == category
-                              ? _getCategoryColor(category)
+                              ? Utils.getCategoryColor(category)
                               : CupertinoColors.systemGrey5,
                           borderRadius: BorderRadius.circular(16),
                         ),

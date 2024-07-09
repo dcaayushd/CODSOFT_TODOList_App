@@ -5,6 +5,8 @@ import 'package:todolist_app/models/task.dart';
 import 'package:todolist_app/providers/task_provider.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/utils.dart';
+
 class AddTaskDialog extends StatefulWidget {
   @override
   _AddTaskDialogState createState() => _AddTaskDialogState();
@@ -22,19 +24,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     super.initState();
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Learning':
-        return Colors.blue;
-      case 'Working':
-        return Colors.red;
-      case 'General':
-        return Colors.green;
-      default:
-        return Colors.orange;
-    }
   }
 
   @override
@@ -91,7 +80,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                         margin: EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           color: _selectedCategory == category
-                              ? _getCategoryColor(category)
+                              ? Utils.getCategoryColor(category)
                               : CupertinoColors.systemGrey5,
                           borderRadius: BorderRadius.circular(16),
                         ),

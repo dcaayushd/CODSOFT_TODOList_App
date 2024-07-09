@@ -6,23 +6,25 @@ import 'package:todolist_app/providers/task_provider.dart';
 import 'package:todolist_app/widgets/edit_task_dialog.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/utils.dart';
+
 class TaskListItem extends StatelessWidget {
   final Task task;
 
   const TaskListItem({Key? key, required this.task}) : super(key: key);
 
-  Color _getCategoryColor() {
-    switch (task.category) {
-      case 'Learning':
-        return Colors.blue;
-      case 'Working':
-        return Colors.red;
-      case 'General':
-        return Colors.green;
-      default:
-        return Colors.orange;
-    }
-  }
+  // Color _getCategoryColor() {
+  //   switch (task.category) {
+  //     case 'Learning':
+  //       return Colors.blue;
+  //     case 'Working':
+  //       return Colors.red;
+  //     case 'General':
+  //       return Colors.green;
+  //     default:
+  //       return Colors.orange;
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +50,7 @@ class TaskListItem extends StatelessWidget {
                 : TextDecoration.none,
             decorationColor: task.isCompleted
                 ? brightness == Brightness.light
-                    ? _getCategoryColor().withOpacity(1)
+                    ? Utils.getCategoryColor(task.category).withOpacity(1)
                     : CupertinoColors.black
                 : null,
             decorationThickness: 3,
@@ -97,7 +99,7 @@ class TaskListItem extends StatelessWidget {
                   );
                 },
               ),
-        tileColor: _getCategoryColor().withOpacity(0.1),
+        tileColor: Utils.getCategoryColor(task.category).withOpacity(0.1),
       ),
     );
   }
