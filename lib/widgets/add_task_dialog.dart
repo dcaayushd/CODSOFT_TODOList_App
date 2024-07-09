@@ -197,7 +197,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               _selectedDate = val;
             });
           },
-          backgroundColor: CupertinoColors.systemBackground,
         ),
       ),
     );
@@ -219,7 +218,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               _selectedTime = TimeOfDay.fromDateTime(val);
             });
           },
-          backgroundColor: CupertinoColors.systemBackground,
         ),
       ),
     );
