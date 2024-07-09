@@ -33,10 +33,12 @@ class TaskListItem extends StatelessWidget {
       child: ListTile(
         leading: Checkbox(
           value: task.isCompleted,
-          onChanged: (bool? value) {
-            Provider.of<TaskProvider>(context, listen: false)
-                .toggleTaskCompletion(task.id);
-          },
+          onChanged: task.isCompleted
+              ? null
+              : (bool? value) {
+                  Provider.of<TaskProvider>(context, listen: false)
+                      .toggleTaskCompletion(task.id);
+                },
         ),
         title: Text(
           task.title,
@@ -82,15 +84,17 @@ class TaskListItem extends StatelessWidget {
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: Icon(Icons.edit),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => EditTaskDialog(task: task),
-            );
-          },
-        ),
+        trailing: task.isCompleted
+            ? null
+            : IconButton(
+                icon: Icon(Icons.edit),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => EditTaskDialog(task: task),
+                  );
+                },
+              ),
         tileColor: _getCategoryColor().withOpacity(0.1),
       ),
     );
