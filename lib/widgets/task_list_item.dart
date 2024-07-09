@@ -61,16 +61,18 @@ class TaskListItem extends StatelessWidget {
             SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.category, size: 16),
+                Icon(CupertinoIcons.tag, size: 16),
                 SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    task.category,
+                    task.category.isEmpty
+                        ? 'No category selected'
+                        : task.category,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 SizedBox(width: 8),
-                Icon(Icons.access_time, size: 16),
+                Icon(CupertinoIcons.time, size: 16),
                 SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -87,7 +89,7 @@ class TaskListItem extends StatelessWidget {
         trailing: task.isCompleted
             ? null
             : IconButton(
-                icon: Icon(Icons.edit),
+                icon: Icon(CupertinoIcons.pencil),
                 onPressed: () {
                   showDialog(
                     context: context,
