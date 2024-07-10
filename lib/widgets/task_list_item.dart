@@ -12,20 +12,7 @@ class TaskListItem extends StatelessWidget {
   final Task task;
 
   const TaskListItem({Key? key, required this.task}) : super(key: key);
-
-  // Color _getCategoryColor() {
-  //   switch (task.category) {
-  //     case 'Learning':
-  //       return Colors.blue;
-  //     case 'Working':
-  //       return Colors.red;
-  //     case 'General':
-  //       return Colors.green;
-  //     default:
-  //       return Colors.orange;
-  //   }
-  // }
-
+  
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
