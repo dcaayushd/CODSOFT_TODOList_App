@@ -1,16 +1,17 @@
 import 'package:flutter/cupertino.dart';
-// import 'package:intl/intl.dart';
 
 class DateTimePicker extends StatefulWidget {
   final DateTime? initialDateTime;
   final Function(DateTime)? onDateTimeChanged;
   final CupertinoDatePickerMode mode;
+  final DateTime? minimumDate;
 
   DateTimePicker({
     Key? key,
     this.initialDateTime,
     this.onDateTimeChanged,
     required this.mode,
+    this.minimumDate,
   }) : super(key: key);
 
   @override
@@ -33,6 +34,7 @@ class _DateTimePickerState extends State<DateTimePicker> {
       child: CupertinoDatePicker(
         mode: widget.mode,
         initialDateTime: _selectedDateTime,
+        minimumDate: widget.minimumDate,
         onDateTimeChanged: (val) {
           setState(() {
             _selectedDateTime = val;
