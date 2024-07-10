@@ -44,6 +44,14 @@ class TaskListItem extends StatelessWidget {
           },
         );
       },
+      onTap: () {
+        if (!task.isCompleted) {
+          showDialog(
+            context: context,
+            builder: (context) => EditTaskDialog(task: task),
+          );
+        }
+      },
       child: Stack(
         children: [
           Card(
@@ -109,7 +117,10 @@ class TaskListItem extends StatelessWidget {
               trailing: task.isCompleted
                   ? null
                   : IconButton(
-                      icon: Icon(CupertinoIcons.pencil),
+                      icon: Icon(
+                        CupertinoIcons.pencil,
+                        size: 35,
+                      ),
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -124,9 +135,20 @@ class TaskListItem extends StatelessWidget {
             Positioned(
               top: 8,
               left: 8,
-              child: Icon(
-                CupertinoIcons.pin_fill,
-                color: Theme.of(context).colorScheme.secondary,
+              child: GestureDetector(
+                onTap: () {
+                  if (task.isPinned) {
+                    Provider.of<TaskProvider>(context, listen: false)
+                        .unpinTask(task.id);
+                  } else {
+                    Provider.of<TaskProvider>(context, listen: false)
+                        .pinTask(task.id);
+                  }
+                },
+                child: Icon(
+                  CupertinoIcons.pin_fill,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
               ),
             ),
         ],
