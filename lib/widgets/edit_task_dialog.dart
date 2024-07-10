@@ -6,6 +6,7 @@ import 'package:todolist_app/providers/task_provider.dart';
 import 'package:intl/intl.dart';
 
 import '../utils/utils.dart';
+import '../utils/date_time_picker.dart';
 
 class EditTaskDialog extends StatefulWidget {
   final Task task;
@@ -28,7 +29,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task.title);
-    _descriptionController = TextEditingController(text: widget.task.description);
+    _descriptionController =
+        TextEditingController(text: widget.task.description);
     _selectedCategory = widget.task.category;
     if (widget.task.dueDate != null) {
       _selectedDate = widget.task.dueDate;
@@ -70,7 +72,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               style: TextStyle(color: CupertinoColors.label),
             ),
             SizedBox(height: 16),
-            Text('Category', style: CupertinoTheme.of(context).textTheme.textStyle),
+            Text('Category',
+                style: CupertinoTheme.of(context).textTheme.textStyle),
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: SingleChildScrollView(
@@ -85,7 +88,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                         });
                       },
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         margin: EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           color: _selectedCategory == category
@@ -189,9 +193,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         color: CupertinoTheme.of(context).brightness == Brightness.light
             ? CupertinoColors.systemBackground
             : Colors.black,
-        child: CupertinoDatePicker(
+        child: DateTimePicker(
+          initialDateTime: _selectedDate ?? DateTime.now(),
           mode: CupertinoDatePickerMode.date,
-          initialDateTime: DateTime.now(),
           onDateTimeChanged: (val) {
             setState(() {
               _selectedDate = val;
@@ -199,7 +203,13 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
           },
         ),
       ),
-    );
+    ).then((_) {
+      if (_selectedDate == null) {
+        setState(() {
+          _selectedDate = DateTime.now();
+        });
+      }
+    });
   }
 
   void _showTimePicker(BuildContext context) {
@@ -210,9 +220,11 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         color: CupertinoTheme.of(context).brightness == Brightness.light
             ? CupertinoColors.systemBackground
             : Colors.black,
-        child: CupertinoDatePicker(
+        child: DateTimePicker(
+          initialDateTime: _selectedTime != null
+              ? DateTime(2023, 1, 1, _selectedTime!.hour, _selectedTime!.minute)
+              : DateTime.now(),
           mode: CupertinoDatePickerMode.time,
-          initialDateTime: DateTime.now(),
           onDateTimeChanged: (val) {
             setState(() {
               _selectedTime = TimeOfDay.fromDateTime(val);
@@ -220,6 +232,19 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
           },
         ),
       ),
-    );
+    ).then((_) {
+      if (_selectedTime == null) {
+        setState(() {
+          _selectedTime = TimeOfDay.now();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
   }
 }

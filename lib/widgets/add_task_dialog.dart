@@ -6,6 +6,7 @@ import 'package:todolist_app/providers/task_provider.dart';
 import 'package:intl/intl.dart';
 
 import '../utils/utils.dart';
+import '../utils/date_time_picker.dart';
 
 class AddTaskDialog extends StatefulWidget {
   @override
@@ -178,9 +179,9 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         color: CupertinoTheme.of(context).brightness == Brightness.light
             ? CupertinoColors.systemBackground
             : Colors.black,
-        child: CupertinoDatePicker(
+        child: DateTimePicker(
+          initialDateTime: _selectedDate,
           mode: CupertinoDatePickerMode.date,
-          initialDateTime: DateTime.now(),
           onDateTimeChanged: (val) {
             setState(() {
               _selectedDate = val;
@@ -188,7 +189,13 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           },
         ),
       ),
-    );
+    ).then((_) {
+      if (_selectedDate == null) {
+        setState(() {
+          _selectedDate = DateTime.now();
+        });
+      }
+    });
   }
 
   void _showTimePicker(BuildContext context) {
@@ -199,9 +206,11 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         color: CupertinoTheme.of(context).brightness == Brightness.light
             ? CupertinoColors.systemBackground
             : Colors.black,
-        child: CupertinoDatePicker(
+        child: DateTimePicker(
+          initialDateTime: _selectedTime != null
+              ? DateTime(2023, 1, 1, _selectedTime!.hour, _selectedTime!.minute)
+              : DateTime.now(),
           mode: CupertinoDatePickerMode.time,
-          initialDateTime: DateTime.now(),
           onDateTimeChanged: (val) {
             setState(() {
               _selectedTime = TimeOfDay.fromDateTime(val);
@@ -209,7 +218,13 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           },
         ),
       ),
-    );
+    ).then((_) {
+      if (_selectedTime == null) {
+        setState(() {
+          _selectedTime = TimeOfDay.now();
+        });
+      }
+    });
   }
 
   @override
