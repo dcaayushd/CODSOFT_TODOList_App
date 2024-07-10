@@ -9,8 +9,10 @@ class Utils {
         return Colors.red;
       case 'General':
         return Colors.green;
-      default:
+      case 'Other':
         return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 }
