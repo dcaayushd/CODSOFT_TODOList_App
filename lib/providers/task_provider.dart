@@ -18,7 +18,7 @@ class TaskProvider with ChangeNotifier {
     List<Task> sortedTasks = List.from(tasks);
     sortedTasks.sort((a, b) {
       if (a.isPinned != b.isPinned) {
-        return a.isPinned ? -1 : 1; 
+        return a.isPinned ? -1 : 1;
       }
       if (a.dueDate == null && b.dueDate == null) return 0;
       if (a.dueDate == null) return 1;
@@ -72,11 +72,18 @@ class TaskProvider with ChangeNotifier {
   }
 
   void updateTask(Task updatedTask) {
-    _taskService.updateTask(updatedTask);
-    _notificationService.cancelNotification(updatedTask);
-    _notificationService.scheduleNotification(updatedTask);
-    _saveTasks();
-    notifyListeners();
+    int index =
+        _taskService.getTasks().indexWhere((task) => task.id == updatedTask.id);
+    if (index != -1) {
+      Task existingTask = _taskService.getTasks()[index];
+      updatedTask.isPinned =
+          existingTask.isPinned; // Preserve the pinned status
+      _taskService.updateTask(updatedTask);
+      _notificationService.cancelNotification(existingTask);
+      _notificationService.scheduleNotification(updatedTask);
+      _saveTasks();
+      notifyListeners();
+    }
   }
 
   void deleteTask(String id) {

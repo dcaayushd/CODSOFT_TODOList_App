@@ -22,18 +22,19 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   late String _selectedCategory;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  late bool _isPinned;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task.title);
-    _descriptionController =
-        TextEditingController(text: widget.task.description);
+    _descriptionController = TextEditingController(text: widget.task.description);
     _selectedCategory = widget.task.category;
     if (widget.task.dueDate != null) {
       _selectedDate = widget.task.dueDate;
       _selectedTime = TimeOfDay.fromDateTime(widget.task.dueDate!);
     }
+    _isPinned = widget.task.isPinned;
   }
 
   @override
@@ -69,8 +70,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               style: TextStyle(color: CupertinoColors.label),
             ),
             SizedBox(height: 16),
-            Text('Category',
-                style: CupertinoTheme.of(context).textTheme.textStyle),
+            Text('Category', style: CupertinoTheme.of(context).textTheme.textStyle),
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: SingleChildScrollView(
@@ -85,8 +85,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                         });
                       },
                       child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         margin: EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           color: _selectedCategory == category
@@ -168,6 +167,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                             )
                           : null,
                       isCompleted: widget.task.isCompleted,
+                      isPinned: _isPinned,
                     );
                     taskProvider.updateTask(updatedTask);
                     Navigator.of(context).pop();

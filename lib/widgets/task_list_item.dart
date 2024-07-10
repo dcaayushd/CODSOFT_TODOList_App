@@ -17,33 +17,35 @@ class TaskListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return GestureDetector(
-      onLongPress: () {
-        showModalBottomSheet(
-          context: context,
-          builder: (context) {
-            return ListView(
-              children: [
-                ListTile(
-                  leading: Icon(task.isPinned
-                      ? CupertinoIcons.pin_slash
-                      : CupertinoIcons.pin),
-                  title: Text(task.isPinned ? 'Unpin' : 'Pin'),
-                  onTap: () {
-                    if (task.isPinned) {
-                      Provider.of<TaskProvider>(context, listen: false)
-                          .unpinTask(task.id);
-                    } else {
-                      Provider.of<TaskProvider>(context, listen: false)
-                          .pinTask(task.id);
-                    }
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
+      onLongPress: task.isCompleted
+          ? null
+          : () {
+              showModalBottomSheet(
+                context: context,
+                builder: (context) {
+                  return ListView(
+                    children: [
+                      ListTile(
+                        leading: Icon(task.isPinned
+                            ? CupertinoIcons.pin_slash
+                            : CupertinoIcons.pin),
+                        title: Text(task.isPinned ? 'Unpin' : 'Pin'),
+                        onTap: () {
+                          if (task.isPinned) {
+                            Provider.of<TaskProvider>(context, listen: false)
+                                .unpinTask(task.id);
+                          } else {
+                            Provider.of<TaskProvider>(context, listen: false)
+                                .pinTask(task.id);
+                          }
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
       onTap: () {
         if (!task.isCompleted) {
           showDialog(
@@ -131,19 +133,14 @@ class TaskListItem extends StatelessWidget {
               tileColor: Utils.getCategoryColor(task.category).withOpacity(0.1),
             ),
           ),
-          if (task.isPinned)
+          if (task.isPinned && !task.isCompleted)
             Positioned(
               top: 8,
               left: 8,
               child: GestureDetector(
                 onTap: () {
-                  if (task.isPinned) {
-                    Provider.of<TaskProvider>(context, listen: false)
-                        .unpinTask(task.id);
-                  } else {
-                    Provider.of<TaskProvider>(context, listen: false)
-                        .pinTask(task.id);
-                  }
+                  Provider.of<TaskProvider>(context, listen: false)
+                      .unpinTask(task.id);
                 },
                 child: Icon(
                   CupertinoIcons.pin_fill,
