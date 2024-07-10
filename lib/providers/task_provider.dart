@@ -10,12 +10,12 @@ class TaskProvider with ChangeNotifier {
   final TaskService _taskService = TaskService();
   final NotificationService _notificationService = NotificationService();
   List<String> _categories = ['Learning', 'Working', 'General', 'Other'];
-  
+
   List<Task> get tasks => List.from(_taskService.getTasks());
   List<String> get categories => _categories;
-  
+
   List<Task> _sortTasks(List<Task> tasks) {
-    List<Task> sortedTasks = List.from(tasks); 
+    List<Task> sortedTasks = List.from(tasks);
     sortedTasks.sort((a, b) {
       if (a.dueDate == null && b.dueDate == null) return 0;
       if (a.dueDate == null) return 1;
@@ -27,7 +27,7 @@ class TaskProvider with ChangeNotifier {
 
   List<Task> get completedTasks =>
       _sortTasks(tasks.where((task) => task.isCompleted).toList());
-  
+
   List<Task> get remainingTasks =>
       _sortTasks(tasks.where((task) => !task.isCompleted).toList());
 
@@ -109,7 +109,13 @@ class TaskProvider with ChangeNotifier {
 
     DateTime? parseDate(String input) {
       List<String> formats = [
-        'MMM', 'MMMM', 'MM', 'yyyy-MM-dd', 'yyyy/MM/dd', 'MM-dd', 'MM/dd'
+        'MMM',
+        'MMMM',
+        'MM',
+        'yyyy-MM-dd',
+        'yyyy/MM/dd',
+        'MM-dd',
+        'MM/dd'
       ];
 
       for (var format in formats) {
@@ -130,11 +136,17 @@ class TaskProvider with ChangeNotifier {
       final taskTitle = task.title.toLowerCase();
       final taskDescription = task.description.toLowerCase();
       final taskDueDate = task.dueDate;
-      final taskDueDateString = taskDueDate != null ? DateFormat('MMM d, y').format(taskDueDate).toLowerCase() : '';
+      final taskDueDateString = taskDueDate != null
+          ? DateFormat('MMM d, y').format(taskDueDate).toLowerCase()
+          : '';
+      final taskCategory = task.category.toLowerCase();
 
       bool matchesQuery = taskTitle.contains(formattedQuery) ||
-                          taskDescription.contains(formattedQuery) ||
-                          (taskDueDate != null && (taskDueDateString.contains(formattedQuery) || taskDueDate == searchDate));
+          taskDescription.contains(formattedQuery) ||
+          (taskDueDate != null &&
+              (taskDueDateString.contains(formattedQuery) ||
+                  taskDueDate == searchDate)) ||
+          taskCategory.contains(formattedQuery);
 
       return matchesQuery;
     }).toList());
