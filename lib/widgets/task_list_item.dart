@@ -22,6 +22,7 @@ class _TaskListItemState extends State<TaskListItem> {
   bool _isBlinking = false;
   late Timer _timer;
   OverlayEntry? _overlayEntry;
+  static OverlayEntry? _currentOverlay;
 
   @override
   void initState() {
@@ -56,23 +57,49 @@ class _TaskListItemState extends State<TaskListItem> {
   }
 
   void _showReactionContainer(BuildContext context, Offset position) {
-    _removeOverlay();
+    _removeCurrentOverlay();
+
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    final centerPosition = Offset(
+      offset.dx + size.width / 2,
+      offset.dy + size.height / 2,
+    );
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        left: position.dx,
-        top: position.dy,
-        child: Material(
-          color: Colors.transparent,
-          child: TaskReactionContainer(
-            task: widget.task,
-            onClose: _removeOverlay,
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _removeCurrentOverlay,
+              behavior: HitTestBehavior.opaque,
+              child: Container(color: Colors.transparent),
+            ),
           ),
-        ),
+          Positioned(
+            left: centerPosition.dx - 75, // Adjust based on the container width
+            top: centerPosition.dy - 25, // Adjust based on the container height
+            child: Material(
+              color: Colors.transparent,
+              child: TaskReactionContainer(
+                task: widget.task,
+                onClose: _removeCurrentOverlay,
+              ),
+            ),
+          ),
+        ],
       ),
     );
 
     Overlay.of(context)!.insert(_overlayEntry!);
+    _currentOverlay = _overlayEntry;
+  }
+
+  void _removeCurrentOverlay() {
+    _currentOverlay?.remove();
+    _currentOverlay = null;
   }
 
   void _removeOverlay() {
@@ -248,21 +275,27 @@ class TaskReactionContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final categoryColor = Utils.getCategoryColor(task.category);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[800],
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           _buildActionButton(
             context,
             icon: task.isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
+            color: Colors.white,
             onTap: () {
               if (task.isPinned) {
-                Provider.of<TaskProvider>(context, listen: false).unpinTask(task.id);
+                Provider.of<TaskProvider>(context, listen: false)
+                    .unpinTask(task.id);
               } else {
-                Provider.of<TaskProvider>(context, listen: false).pinTask(task.id);
+                Provider.of<TaskProvider>(context, listen: false)
+                    .pinTask(task.id);
               }
               onClose();
             },
@@ -270,6 +303,7 @@ class TaskReactionContainer extends StatelessWidget {
           _buildActionButton(
             context,
             icon: CupertinoIcons.pencil,
+            color: categoryColor,
             onTap: () {
               showDialog(
                 context: context,
@@ -281,8 +315,10 @@ class TaskReactionContainer extends StatelessWidget {
           _buildActionButton(
             context,
             icon: CupertinoIcons.delete,
+            color: Colors.red,
             onTap: () {
-              Provider.of<TaskProvider>(context, listen: false).deleteTask(task.id);
+              Provider.of<TaskProvider>(context, listen: false)
+                  .deleteTask(task.id);
               onClose();
             },
           ),
@@ -291,12 +327,15 @@ class TaskReactionContainer extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
+  Widget _buildActionButton(BuildContext context,
+      {required IconData icon,
+      required Color color,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(10),
-        child: Icon(icon, color: Colors.white, size: 24),
+        child: Icon(icon, color: color, size: 24),
       ),
     );
   }
