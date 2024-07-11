@@ -5,11 +5,13 @@ import 'package:todolist_app/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 class TaskProvider with ChangeNotifier {
   final TaskService _taskService = TaskService();
   final NotificationService _notificationService = NotificationService();
   List<String> _categories = ['Learning', 'Working', 'General', 'Other'];
+  Timer? _overdueCheckTimer;
 
   List<Task> get tasks => List.from(_taskService.getTasks());
   List<String> get categories => _categories;
@@ -21,23 +23,36 @@ class TaskProvider with ChangeNotifier {
           !task.isCompleted)
       .toList());
 
-  void checkAndUpdateOverdueTasks() {
+  Future<void> checkAndUpdateOverdueTasks() async {
     final now = DateTime.now();
-    List<Task> tasksToUpdate = [];
-    
+    bool hasChanges = false;
+
     for (var task in tasks) {
-      if (task.dueDate != null && task.dueDate!.isBefore(now) && !task.isCompleted) {
-        tasksToUpdate.add(task);
+      if (task.dueDate != null &&
+          task.dueDate!.isBefore(now) &&
+          !task.isCompleted &&
+          !task.isOverdue) {
+        task.isOverdue = true;
+        hasChanges = true;
       }
     }
 
-    for (var task in tasksToUpdate) {
-      overdueTasks.add(task);
-      _taskService.deleteTask(task.id);
+    if (hasChanges) {
+      await _saveTasks();
+      notifyListeners();
     }
+  }
 
-    _saveTasks();
-    notifyListeners();
+  void startPeriodicOverdueCheck() {
+    // Check for overdue tasks every minute
+    _overdueCheckTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+      checkAndUpdateOverdueTasks();
+    });
+  }
+
+  void stopPeriodicOverdueCheck() {
+    _overdueCheckTimer?.cancel();
+    _overdueCheckTimer = null;
   }
 
   List<Task> _sortTasks(List<Task> tasks) {
@@ -57,8 +72,8 @@ class TaskProvider with ChangeNotifier {
   List<Task> get completedTasks =>
       _sortTasks(tasks.where((task) => task.isCompleted).toList());
 
-  List<Task> get remainingTasks =>
-      _sortTasks(tasks.where((task) => !task.isCompleted).toList());
+  List<Task> get remainingTasks => _sortTasks(
+      tasks.where((task) => !task.isCompleted && !task.isOverdue).toList());
 
   TaskProvider() {
     _notificationService.init();
@@ -72,6 +87,7 @@ class TaskProvider with ChangeNotifier {
           .map((taskString) => Task.fromJson(json.decode(taskString)))
           .toList();
       _taskService.setTasks(loadedTasks);
+      await checkAndUpdateOverdueTasks();
       notifyListeners();
     }
     _categories = prefs.getStringList('categories') ?? _categories;
@@ -85,19 +101,15 @@ class TaskProvider with ChangeNotifier {
     await prefs.setStringList('categories', _categories);
   }
 
-  void addTask(Task task) {
+  Future<void> addTask(Task task) async {
     _taskService.addTask(task);
     _notificationService.scheduleNotification(task);
-    _saveTasks();
+    await checkAndUpdateOverdueTasks();
+    await _saveTasks();
     notifyListeners();
-
-    // Schedule a re-sort after 1 minute
-    Future.delayed(Duration(minutes: 1), () {
-      notifyListeners();
-    });
   }
 
-  void updateTask(Task updatedTask) {
+  Future<void> updateTask(Task updatedTask) async {
     int index =
         _taskService.getTasks().indexWhere((task) => task.id == updatedTask.id);
     if (index != -1) {
@@ -106,20 +118,18 @@ class TaskProvider with ChangeNotifier {
       _taskService.updateTask(updatedTask);
       _notificationService.cancelNotification(existingTask);
       _notificationService.scheduleNotification(updatedTask);
-      _saveTasks();
+      await _saveTasks();
       notifyListeners();
     }
   }
 
-  void deleteTask(String id) {
-    Task task = tasks.firstWhere((task) => task.id == id);
+  Future<void> deleteTask(String id) async {
     _taskService.deleteTask(id);
-    _notificationService.cancelNotification(task);
-    _saveTasks();
+    await _saveTasks();
     notifyListeners();
   }
 
-  void toggleTaskCompletion(String id) {
+  Future<void> toggleTaskCompletion(String id) async {
     _taskService.toggleTaskCompletion(id);
     Task task = tasks.firstWhere((task) => task.id == id);
     if (task.isCompleted) {
@@ -127,30 +137,30 @@ class TaskProvider with ChangeNotifier {
     } else {
       _notificationService.scheduleNotification(task);
     }
-    _saveTasks();
+    await _saveTasks();
     notifyListeners();
   }
 
-  void pinTask(String id) {
+  Future<void> pinTask(String id) async {
     Task task = tasks.firstWhere((task) => task.id == id);
     task.isPinned = true;
     _taskService.updateTask(task);
-    _saveTasks();
+    await _saveTasks();
     notifyListeners();
   }
 
-  void unpinTask(String id) {
+  Future<void> unpinTask(String id) async {
     Task task = tasks.firstWhere((task) => task.id == id);
     task.isPinned = false;
     _taskService.updateTask(task);
-    _saveTasks();
+    await _saveTasks();
     notifyListeners();
   }
 
-  void addCategory(String category) {
+  Future<void> addCategory(String category) async {
     if (!_categories.contains(category)) {
       _categories.add(category);
-      _saveTasks();
+      await _saveTasks();
       notifyListeners();
     }
   }
