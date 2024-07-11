@@ -21,6 +21,7 @@ class TaskListItem extends StatefulWidget {
 class _TaskListItemState extends State<TaskListItem> {
   bool _isBlinking = false;
   late Timer _timer;
+  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _TaskListItemState extends State<TaskListItem> {
   @override
   void dispose() {
     _timer.cancel();
+    _removeOverlay();
     super.dispose();
   }
 
@@ -53,41 +55,42 @@ class _TaskListItemState extends State<TaskListItem> {
         !widget.task.isCompleted;
   }
 
+  void _showReactionContainer(BuildContext context, Offset position) {
+    _removeOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: position.dx,
+        top: position.dy,
+        child: Material(
+          color: Colors.transparent,
+          child: TaskReactionContainer(
+            task: widget.task,
+            onClose: _removeOverlay,
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context)!.insert(_overlayEntry!);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final isOverdue = this.isOverdue;
 
     return GestureDetector(
-      onLongPress: widget.task.isCompleted
-          ? null
-          : () {
-              showModalBottomSheet(
-                context: context,
-                builder: (context) {
-                  return ListView(
-                    children: [
-                      ListTile(
-                        leading: Icon(widget.task.isPinned
-                            ? CupertinoIcons.pin_slash
-                            : CupertinoIcons.pin),
-                        title: Text(widget.task.isPinned ? 'Unpin' : 'Pin'),
-                        onTap: () {
-                          if (widget.task.isPinned) {
-                            Provider.of<TaskProvider>(context, listen: false)
-                                .unpinTask(widget.task.id);
-                          } else {
-                            Provider.of<TaskProvider>(context, listen: false)
-                                .pinTask(widget.task.id);
-                          }
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
+      onLongPressStart: (details) {
+        if (!widget.task.isCompleted) {
+          _showReactionContainer(context, details.globalPosition);
+        }
+      },
       onTap: () {
         if (!widget.task.isCompleted) {
           showDialog(
@@ -228,6 +231,72 @@ class _TaskListItemState extends State<TaskListItem> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class TaskReactionContainer extends StatelessWidget {
+  final Task task;
+  final VoidCallback onClose;
+
+  const TaskReactionContainer({
+    Key? key,
+    required this.task,
+    required this.onClose,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Row(
+        children: [
+          _buildActionButton(
+            context,
+            icon: task.isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
+            onTap: () {
+              if (task.isPinned) {
+                Provider.of<TaskProvider>(context, listen: false).unpinTask(task.id);
+              } else {
+                Provider.of<TaskProvider>(context, listen: false).pinTask(task.id);
+              }
+              onClose();
+            },
+          ),
+          _buildActionButton(
+            context,
+            icon: CupertinoIcons.pencil,
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => EditTaskDialog(task: task),
+              );
+              onClose();
+            },
+          ),
+          _buildActionButton(
+            context,
+            icon: CupertinoIcons.delete,
+            onTap: () {
+              Provider.of<TaskProvider>(context, listen: false).deleteTask(task.id);
+              onClose();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(10),
+        child: Icon(icon, color: Colors.white, size: 24),
       ),
     );
   }
