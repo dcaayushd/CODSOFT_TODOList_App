@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todolist_app/models/task.dart';
 import 'package:todolist_app/providers/task_provider.dart';
+import 'package:todolist_app/widgets/delete_task_dialog.dart';
 import 'package:todolist_app/widgets/edit_task_dialog.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
@@ -65,7 +66,7 @@ class TaskListItem extends StatefulWidget {
       ),
     );
 
-    Overlay.of(context)!.insert(currentOverlay!);
+    Overlay.of(context).insert(currentOverlay!);
   }
 }
 
@@ -315,9 +316,16 @@ class TaskReactionContainer extends StatelessWidget {
             icon: CupertinoIcons.delete,
             color: Colors.red,
             onTap: () {
-              Provider.of<TaskProvider>(context, listen: false)
-                  .deleteTask(task.id);
-              onClose();
+              showDialog(
+                context: context,
+                builder: (context) => DeleteTaskDialog(taskTitle: task.title),
+              ).then((result) {
+                if (result == true) {
+                  Provider.of<TaskProvider>(context, listen: false)
+                      .deleteTask(task.id);
+                }
+                onClose();
+              });
             },
           ),
         ],
