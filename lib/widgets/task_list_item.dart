@@ -5,19 +5,61 @@ import 'package:todolist_app/models/task.dart';
 import 'package:todolist_app/providers/task_provider.dart';
 import 'package:todolist_app/widgets/edit_task_dialog.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 import '../utils/utils.dart';
 
-class TaskListItem extends StatelessWidget {
+class TaskListItem extends StatefulWidget {
   final Task task;
 
   const TaskListItem({Key? key, required this.task}) : super(key: key);
 
   @override
+  _TaskListItemState createState() => _TaskListItemState();
+}
+
+class _TaskListItemState extends State<TaskListItem> {
+  bool _isBlinking = false;
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(Duration.zero, () {});
+
+    if (isOverdue) {
+      _startBlinking();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  void _startBlinking() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _isBlinking = !_isBlinking;
+      });
+    });
+  }
+
+  bool get isOverdue {
+    final now = DateTime.now();
+    return widget.task.dueDate != null &&
+        widget.task.dueDate!.isBefore(now) &&
+        !widget.task.isCompleted;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final isOverdue = this.isOverdue;
+
     return GestureDetector(
-      onLongPress: task.isCompleted
+      onLongPress: widget.task.isCompleted
           ? null
           : () {
               showModalBottomSheet(
@@ -26,17 +68,17 @@ class TaskListItem extends StatelessWidget {
                   return ListView(
                     children: [
                       ListTile(
-                        leading: Icon(task.isPinned
+                        leading: Icon(widget.task.isPinned
                             ? CupertinoIcons.pin_slash
                             : CupertinoIcons.pin),
-                        title: Text(task.isPinned ? 'Unpin' : 'Pin'),
+                        title: Text(widget.task.isPinned ? 'Unpin' : 'Pin'),
                         onTap: () {
-                          if (task.isPinned) {
+                          if (widget.task.isPinned) {
                             Provider.of<TaskProvider>(context, listen: false)
-                                .unpinTask(task.id);
+                                .unpinTask(widget.task.id);
                           } else {
                             Provider.of<TaskProvider>(context, listen: false)
-                                .pinTask(task.id);
+                                .pinTask(widget.task.id);
                           }
                           Navigator.pop(context);
                         },
@@ -47,10 +89,10 @@ class TaskListItem extends StatelessWidget {
               );
             },
       onTap: () {
-        if (!task.isCompleted) {
+        if (!widget.task.isCompleted) {
           showDialog(
             context: context,
-            builder: (context) => EditTaskDialog(task: task),
+            builder: (context) => EditTaskDialog(task: widget.task),
           );
         }
       },
@@ -59,92 +101,129 @@ class TaskListItem extends StatelessWidget {
           Card(
             elevation: 2,
             margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            color:
+                isOverdue && _isBlinking ? Colors.red.withOpacity(0.1) : null,
             child: ListTile(
               leading: Checkbox(
-                value: task.isCompleted,
-                onChanged: task.isCompleted
+                value: widget.task.isCompleted,
+                onChanged: widget.task.isCompleted
                     ? null
                     : (bool? value) {
                         Provider.of<TaskProvider>(context, listen: false)
-                            .toggleTaskCompletion(task.id);
+                            .toggleTaskCompletion(widget.task.id);
                       },
+                activeColor: isOverdue ? Colors.red : null,
               ),
               title: Text(
-                task.title,
+                widget.task.title,
                 style: TextStyle(
-                  decoration: task.isCompleted
+                  decoration: widget.task.isCompleted
                       ? TextDecoration.lineThrough
                       : TextDecoration.none,
-                  decorationColor: task.isCompleted
+                  decorationColor: widget.task.isCompleted
                       ? brightness == Brightness.light
-                          ? Utils.getCategoryColor(task.category).withOpacity(1)
+                          ? Utils.getCategoryColor(widget.task.category)
+                              .withOpacity(1)
                           : CupertinoColors.black
                       : null,
                   decorationThickness: 3,
+                  color: isOverdue ? Colors.red : null,
                 ),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(task.description),
+                  if (isOverdue)
+                    Text(
+                      'Task not completed on time!',
+                      style: TextStyle(
+                          color: Colors.red, fontWeight: FontWeight.bold),
+                    ),
+                  Text(
+                    widget.task.description,
+                    style: TextStyle(
+                      color: isOverdue ? Colors.red : null,
+                    ),
+                  ),
                   SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(CupertinoIcons.tag, size: 16),
+                      Icon(
+                        CupertinoIcons.tag,
+                        size: 16,
+                        color: isOverdue ? Colors.red : null,
+                      ),
                       SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          task.category.isEmpty
+                          widget.task.category.isEmpty
                               ? 'No category selected'
-                              : task.category,
+                              : widget.task.category,
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isOverdue ? Colors.red : null,
+                          ),
                         ),
                       ),
                       SizedBox(width: 8),
-                      Icon(CupertinoIcons.time, size: 16),
+                      Icon(
+                        CupertinoIcons.time,
+                        size: 16,
+                        color: isOverdue ? Colors.red : null,
+                      ),
                       SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          task.dueDate != null
+                          widget.task.dueDate != null
                               ? DateFormat('MMM d, y HH:mm')
-                                  .format(task.dueDate!)
+                                  .format(widget.task.dueDate!)
                               : 'No due date',
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isOverdue ? Colors.red : null,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-              trailing: task.isCompleted
+              trailing: widget.task.isCompleted
                   ? null
                   : IconButton(
                       icon: Icon(
                         CupertinoIcons.pencil,
                         size: 35,
+                        color: isOverdue ? Colors.red : null,
                       ),
                       onPressed: () {
                         showDialog(
                           context: context,
-                          builder: (context) => EditTaskDialog(task: task),
+                          builder: (context) =>
+                              EditTaskDialog(task: widget.task),
                         );
                       },
                     ),
-              tileColor: Utils.getCategoryColor(task.category).withOpacity(0.1),
+              tileColor: isOverdue
+                  ? Colors.red.withOpacity(0.1)
+                  : Utils.getCategoryColor(widget.task.category)
+                      .withOpacity(0.1),
             ),
           ),
-          if (task.isPinned && !task.isCompleted)
+          if (widget.task.isPinned && !widget.task.isCompleted)
             Positioned(
               top: 8,
               left: 8,
               child: GestureDetector(
                 onTap: () {
                   Provider.of<TaskProvider>(context, listen: false)
-                      .unpinTask(task.id);
+                      .unpinTask(widget.task.id);
                 },
                 child: Icon(
                   CupertinoIcons.pin_fill,
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: isOverdue
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.secondary,
                 ),
               ),
             ),
