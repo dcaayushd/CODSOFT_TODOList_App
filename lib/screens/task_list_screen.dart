@@ -44,6 +44,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
   Widget build(BuildContext context) {
     return Consumer<TaskProvider>(
       builder: (context, taskProvider, child) {
+        Map<String, List<Task>> categorizedTasks = _searchQuery.isEmpty
+            ? {
+                'remaining': taskProvider.remainingTasks,
+                'completed': taskProvider.completedTasks,
+                'overdue': taskProvider.overdueTasks,
+              }
+            : taskProvider.searchTasks(_searchQuery);
+
         return Scaffold(
           appBar: AppBar(
             centerTitle: true,
@@ -99,7 +107,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                 curve: Curves.easeInOut);
                           },
                           child: Text(
-                            'Remaining Tasks (${taskProvider.remainingTasks.length})',
+                            'Remaining Tasks (${categorizedTasks['remaining']!.length})',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -118,7 +126,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                 curve: Curves.easeInOut);
                           },
                           child: Text(
-                            'Completed Tasks (${taskProvider.completedTasks.length})',
+                            'Completed Tasks (${categorizedTasks['completed']!.length})',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -137,7 +145,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                 curve: Curves.easeInOut);
                           },
                           child: Text(
-                            'Overdue Tasks (${taskProvider.overdueTasks.length})',
+                            'Overdue Tasks (${categorizedTasks['overdue']!.length})',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -195,9 +203,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     _currentPageNotifier.value = index;
                   },
                   children: [
-                    _buildTaskList(taskProvider, false),
-                    _buildTaskList(taskProvider, true),
-                    _buildOverdueTaskList(taskProvider),
+                    _buildTaskList(categorizedTasks['remaining']!, false),
+                    _buildTaskList(categorizedTasks['completed']!, true),
+                    _buildTaskList(categorizedTasks['overdue']!, false, isOverdue: true),
                   ],
                 ),
               ),
@@ -229,33 +237,21 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  Widget _buildTaskList(TaskProvider taskProvider, bool showCompleted) {
-    final List<Task> filteredTasks;
-    if (_searchQuery.isEmpty) {
-      filteredTasks = showCompleted
-          ? taskProvider.completedTasks
-          : taskProvider.remainingTasks;
-    } else {
-      final searchResults = taskProvider.searchTasks(_searchQuery);
-      filteredTasks = showCompleted
-          ? searchResults['completed']!
-          : searchResults['remaining']!;
-    }
-
-    if (filteredTasks.isEmpty) {
+  Widget _buildTaskList(List<Task> tasks, bool showCompleted, {bool isOverdue = false}) {
+    if (tasks.isEmpty) {
       return Center(
         child: Text(
           _searchQuery.isEmpty
-              ? 'No tasks yet'
+              ? 'No ${isOverdue ? 'overdue' : showCompleted ? 'completed' : ''} tasks'
               : 'No matching tasks in this category',
         ),
       );
     }
 
     return ListView.builder(
-      itemCount: filteredTasks.length,
+      itemCount: tasks.length,
       itemBuilder: (context, index) {
-        final task = filteredTasks[index];
+        final task = tasks[index];
         final isNewlyAdded = _lastAddedTaskTime != null &&
             task.createdAt.isAfter(_lastAddedTaskTime!);
 
@@ -279,66 +275,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
             return result == true;
           },
           onDismissed: (direction) {
-            taskProvider.deleteTask(task.id);
-          },
-          child: AnimatedContainer(
-            duration: Duration(seconds: 1),
-            curve: Curves.easeInOut,
-            color: isNewlyAdded ? Colors.yellow.withOpacity(0.3) : null,
-            child: TaskListItem(task: task),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildOverdueTaskList(TaskProvider taskProvider) {
-    final List<Task> filteredTasks;
-    if (_searchQuery.isEmpty) {
-      filteredTasks = taskProvider.overdueTasks;
-    } else {
-      final searchResults = taskProvider.searchTasks(_searchQuery);
-      filteredTasks = searchResults['overdue']!;
-    }
-
-    if (filteredTasks.isEmpty) {
-      return Center(
-        child: Text(
-          _searchQuery.isEmpty
-              ? 'No overdue tasks'
-              : 'No matching overdue tasks',
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: filteredTasks.length,
-      itemBuilder: (context, index) {
-        final task = filteredTasks[index];
-        final isNewlyAdded = _lastAddedTaskTime != null &&
-            task.createdAt.isAfter(_lastAddedTaskTime!);
-
-        return Dismissible(
-          key: Key(task.id),
-          background: Container(
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.centerRight,
-            padding: EdgeInsets.only(right: 20),
-            child: Icon(CupertinoIcons.delete, color: Colors.white),
-          ),
-          direction: DismissDirection.endToStart,
-          confirmDismiss: (direction) async {
-            final result = await showDialog(
-              context: context,
-              builder: (context) => DeleteTaskDialog(taskTitle: task.title),
-            );
-            return result == true;
-          },
-          onDismissed: (direction) {
-            taskProvider.deleteTask(task.id);
+            Provider.of<TaskProvider>(context, listen: false).deleteTask(task.id);
           },
           child: AnimatedContainer(
             duration: Duration(seconds: 1),
