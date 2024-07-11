@@ -14,6 +14,32 @@ class TaskProvider with ChangeNotifier {
   List<Task> get tasks => List.from(_taskService.getTasks());
   List<String> get categories => _categories;
 
+  List<Task> get overdueTasks => _sortTasks(tasks
+      .where((task) =>
+          task.dueDate != null &&
+          task.dueDate!.isBefore(DateTime.now()) &&
+          !task.isCompleted)
+      .toList());
+
+  void checkAndUpdateOverdueTasks() {
+    final now = DateTime.now();
+    List<Task> tasksToUpdate = [];
+    
+    for (var task in tasks) {
+      if (task.dueDate != null && task.dueDate!.isBefore(now) && !task.isCompleted) {
+        tasksToUpdate.add(task);
+      }
+    }
+
+    for (var task in tasksToUpdate) {
+      overdueTasks.add(task);
+      _taskService.deleteTask(task.id);
+    }
+
+    _saveTasks();
+    notifyListeners();
+  }
+
   List<Task> _sortTasks(List<Task> tasks) {
     List<Task> sortedTasks = List.from(tasks);
     sortedTasks.sort((a, b) {
@@ -76,8 +102,7 @@ class TaskProvider with ChangeNotifier {
         _taskService.getTasks().indexWhere((task) => task.id == updatedTask.id);
     if (index != -1) {
       Task existingTask = _taskService.getTasks()[index];
-      updatedTask.isPinned =
-          existingTask.isPinned; // Preserve the pinned status
+      updatedTask.isPinned = existingTask.isPinned;
       _taskService.updateTask(updatedTask);
       _notificationService.cancelNotification(existingTask);
       _notificationService.scheduleNotification(updatedTask);

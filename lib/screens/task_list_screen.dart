@@ -22,6 +22,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
+    // Check and move overdue tasks when screen initializes
+    Provider.of<TaskProvider>(context, listen: false)
+        .checkAndUpdateOverdueTasks();
   }
 
   @override
@@ -82,34 +85,62 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      TextButton(
-                        onPressed: () {
-                          _pageController.animateToPage(0,
-                              duration: Duration(milliseconds: 300),
-                              curve: Curves.easeInOut);
-                        },
-                        child: Text(
-                          'Pending Tasks (${taskProvider.remainingTasks.length})',
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: currentPage == 0
-                              ? Theme.of(context).colorScheme.secondary
-                              : Colors.grey,
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            _pageController.animateToPage(0,
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut);
+                          },
+                          child: Text(
+                            'Pending Tasks (${taskProvider.remainingTasks.length})',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: currentPage == 0
+                                  ? Theme.of(context).colorScheme.secondary
+                                  : Colors.grey,
+                            ),
+                          ),
                         ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          _pageController.animateToPage(1,
-                              duration: Duration(milliseconds: 300),
-                              curve: Curves.easeInOut);
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: currentPage == 1
-                              ? Theme.of(context).colorScheme.secondary
-                              : Colors.grey,
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            _pageController.animateToPage(1,
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut);
+                          },
+                          child: Text(
+                            'Completed Tasks (${taskProvider.completedTasks.length})',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: currentPage == 1
+                                  ? Theme.of(context).colorScheme.secondary
+                                  : Colors.grey,
+                            ),
+                          ),
                         ),
-                        child: Text(
-                            'Completed Tasks (${taskProvider.completedTasks.length})'),
+                      ),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            _pageController.animateToPage(2,
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut);
+                          },
+                          child: Text(
+                            'Overdue Tasks (${taskProvider.overdueTasks.length})',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: currentPage == 2
+                                  ? Theme.of(context).colorScheme.secondary
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   );
@@ -138,6 +169,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                 : Colors.transparent,
                           ),
                         ),
+                        Expanded(
+                          child: AnimatedContainer(
+                            duration: Duration(milliseconds: 300),
+                            color: currentPage == 2
+                                ? Theme.of(context).colorScheme.secondary
+                                : Colors.transparent,
+                          ),
+                        ),
                       ],
                     );
                   },
@@ -152,6 +191,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   children: [
                     _buildTaskList(taskProvider, false),
                     _buildTaskList(taskProvider, true),
+                    _buildOverdueTaskList(taskProvider),
                   ],
                 ),
               ),
@@ -193,6 +233,63 @@ class _TaskListScreenState extends State<TaskListScreen> {
     if (filteredTasks.isEmpty) {
       return Center(
         child: Text('No tasks yet'),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: filteredTasks.length,
+      itemBuilder: (context, index) {
+        final task = filteredTasks[index];
+        final isNewlyAdded = _lastAddedTaskTime != null &&
+            task.createdAt.isAfter(_lastAddedTaskTime!);
+
+        return Dismissible(
+          key: Key(task.id),
+          background: Container(
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.centerRight,
+            padding: EdgeInsets.only(right: 20),
+            child: Icon(CupertinoIcons.delete, color: Colors.white),
+          ),
+          direction: DismissDirection.endToStart,
+          confirmDismiss: (direction) async {
+            final result = await showDialog(
+              context: context,
+              builder: (context) => DeleteTaskDialog(taskTitle: task.title),
+            );
+            return result == true;
+          },
+          onDismissed: (direction) {
+            taskProvider.deleteTask(task.id);
+          },
+          child: AnimatedContainer(
+            duration: Duration(seconds: 1),
+            curve: Curves.easeInOut,
+            color: isNewlyAdded ? Colors.yellow.withOpacity(0.3) : null,
+            child: TaskListItem(task: task),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOverdueTaskList(TaskProvider taskProvider) {
+    final filteredTasks = _searchQuery.isEmpty
+        ? taskProvider.overdueTasks
+        : taskProvider
+            .searchTasks(_searchQuery)
+            .where((task) =>
+                task.dueDate != null &&
+                task.dueDate!.isBefore(DateTime.now()) &&
+                !task.isCompleted)
+            .toList();
+
+    if (filteredTasks.isEmpty) {
+      return Center(
+        child: Text('No overdue tasks'),
       );
     }
 
