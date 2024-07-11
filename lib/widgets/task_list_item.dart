@@ -11,18 +11,67 @@ import '../utils/utils.dart';
 
 class TaskListItem extends StatefulWidget {
   final Task task;
+  static OverlayEntry? currentOverlay;
 
   const TaskListItem({Key? key, required this.task}) : super(key: key);
 
   @override
   _TaskListItemState createState() => _TaskListItemState();
+
+  static void showReactionContainer(
+      BuildContext context, Task task, Offset position) {
+    if (currentOverlay != null) {
+      currentOverlay!.remove();
+      currentOverlay = null;
+    }
+
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    final centerPosition = Offset(
+      offset.dx + size.width / 2,
+      offset.dy + size.height / 2,
+    );
+
+    currentOverlay = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                currentOverlay?.remove();
+                currentOverlay = null;
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          Positioned(
+            left: centerPosition.dx - 75,
+            top: centerPosition.dy - 25,
+            child: Material(
+              color: Colors.transparent,
+              child: TaskReactionContainer(
+                task: task,
+                onClose: () {
+                  currentOverlay?.remove();
+                  currentOverlay = null;
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Overlay.of(context)!.insert(currentOverlay!);
+  }
 }
 
 class _TaskListItemState extends State<TaskListItem> {
   bool _isBlinking = false;
   late Timer _timer;
-  OverlayEntry? _overlayEntry;
-  static OverlayEntry? _currentOverlay;
 
   @override
   void initState() {
@@ -37,7 +86,6 @@ class _TaskListItemState extends State<TaskListItem> {
   @override
   void dispose() {
     _timer.cancel();
-    _removeOverlay();
     super.dispose();
   }
 
@@ -56,57 +104,6 @@ class _TaskListItemState extends State<TaskListItem> {
         !widget.task.isCompleted;
   }
 
-  void _showReactionContainer(BuildContext context, Offset position) {
-    _removeCurrentOverlay();
-
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
-
-    final centerPosition = Offset(
-      offset.dx + size.width / 2,
-      offset.dy + size.height / 2,
-    );
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: _removeCurrentOverlay,
-              behavior: HitTestBehavior.opaque,
-              child: Container(color: Colors.transparent),
-            ),
-          ),
-          Positioned(
-            left: centerPosition.dx - 75, // Adjust based on the container width
-            top: centerPosition.dy - 25, // Adjust based on the container height
-            child: Material(
-              color: Colors.transparent,
-              child: TaskReactionContainer(
-                task: widget.task,
-                onClose: _removeCurrentOverlay,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    Overlay.of(context)!.insert(_overlayEntry!);
-    _currentOverlay = _overlayEntry;
-  }
-
-  void _removeCurrentOverlay() {
-    _currentOverlay?.remove();
-    _currentOverlay = null;
-  }
-
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
@@ -115,7 +112,8 @@ class _TaskListItemState extends State<TaskListItem> {
     return GestureDetector(
       onLongPressStart: (details) {
         if (!widget.task.isCompleted) {
-          _showReactionContainer(context, details.globalPosition);
+          TaskListItem.showReactionContainer(
+              context, widget.task, details.globalPosition);
         }
       },
       onTap: () {
