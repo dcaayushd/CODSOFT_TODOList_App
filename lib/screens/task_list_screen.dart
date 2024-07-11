@@ -7,6 +7,8 @@ import 'package:todolist_app/widgets/task_list_item.dart';
 import 'package:todolist_app/widgets/add_task_dialog.dart';
 import 'package:todolist_app/widgets/delete_task_dialog.dart';
 
+import '../models/task.dart';
+
 class TaskListScreen extends StatefulWidget {
   @override
   _TaskListScreenState createState() => _TaskListScreenState();
@@ -22,15 +24,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
-    // Check and move overdue tasks when screen initializes
-    Provider.of<TaskProvider>(context, listen: false)
-        .checkAndUpdateOverdueTasks();
+    Future.microtask(() {
+      final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+      taskProvider.checkAndUpdateOverdueTasks();
+      taskProvider.startPeriodicOverdueCheck();
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _currentPageNotifier.dispose();
+    Provider.of<TaskProvider>(context, listen: false).stopPeriodicOverdueCheck();
     super.dispose();
   }
 
@@ -83,7 +88,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 valueListenable: _currentPageNotifier,
                 builder: (context, currentPage, child) {
                   return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       Expanded(
                         child: TextButton(
@@ -93,7 +98,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                 curve: Curves.easeInOut);
                           },
                           child: Text(
-                            'Pending Tasks (${taskProvider.remainingTasks.length})',
+                            'Remaining Tasks (${taskProvider.remainingTasks.length})',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -224,7 +229,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Widget _buildTaskList(TaskProvider taskProvider, bool showCompleted) {
-    final filteredTasks = _searchQuery.isEmpty
+    final List<Task> filteredTasks = _searchQuery.isEmpty
         ? (showCompleted
             ? taskProvider.completedTasks
             : taskProvider.remainingTasks)
@@ -277,15 +282,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Widget _buildOverdueTaskList(TaskProvider taskProvider) {
-    final filteredTasks = _searchQuery.isEmpty
+    final List<Task> filteredTasks = _searchQuery.isEmpty
         ? taskProvider.overdueTasks
-        : taskProvider
-            .searchTasks(_searchQuery)
-            .where((task) =>
-                task.dueDate != null &&
-                task.dueDate!.isBefore(DateTime.now()) &&
-                !task.isCompleted)
-            .toList();
+        : taskProvider.searchTasks(_searchQuery).where((task) => task.isOverdue).toList();
 
     if (filteredTasks.isEmpty) {
       return Center(
