@@ -44,7 +44,6 @@ class TaskProvider with ChangeNotifier {
   }
 
   void startPeriodicOverdueCheck() {
-    // Check for overdue tasks every minute
     _overdueCheckTimer = Timer.periodic(Duration(minutes: 1), (timer) {
       checkAndUpdateOverdueTasks();
     });
@@ -165,7 +164,7 @@ class TaskProvider with ChangeNotifier {
     }
   }
 
-  List<Task> searchTasks(String query) {
+  Map<String, List<Task>> searchTasks(String query) {
     final formattedQuery = query.toLowerCase();
 
     DateTime? parseDate(String input) {
@@ -193,7 +192,13 @@ class TaskProvider with ChangeNotifier {
 
     DateTime? searchDate = parseDate(formattedQuery);
 
-    return _sortTasks(tasks.where((task) {
+    Map<String, List<Task>> categorizedTasks = {
+      'remaining': [],
+      'completed': [],
+      'overdue': [],
+    };
+
+    for (var task in tasks) {
       final taskTitle = task.title.toLowerCase();
       final taskDescription = task.description.toLowerCase();
       final taskDueDate = task.dueDate;
@@ -209,7 +214,21 @@ class TaskProvider with ChangeNotifier {
                   taskDueDate == searchDate)) ||
           taskCategory.contains(formattedQuery);
 
-      return matchesQuery;
-    }).toList());
+      if (matchesQuery) {
+        if (task.isOverdue) {
+          categorizedTasks['overdue']!.add(task);
+        } else if (task.isCompleted) {
+          categorizedTasks['completed']!.add(task);
+        } else {
+          categorizedTasks['remaining']!.add(task);
+        }
+      }
+    }
+
+    categorizedTasks['remaining'] = _sortTasks(categorizedTasks['remaining']!);
+    categorizedTasks['completed'] = _sortTasks(categorizedTasks['completed']!);
+    categorizedTasks['overdue'] = _sortTasks(categorizedTasks['overdue']!);
+
+    return categorizedTasks;
   }
 }

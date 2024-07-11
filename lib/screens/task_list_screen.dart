@@ -35,7 +35,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void dispose() {
     _pageController.dispose();
     _currentPageNotifier.dispose();
-    Provider.of<TaskProvider>(context, listen: false).stopPeriodicOverdueCheck();
+    Provider.of<TaskProvider>(context, listen: false)
+        .stopPeriodicOverdueCheck();
     super.dispose();
   }
 
@@ -229,15 +230,25 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Widget _buildTaskList(TaskProvider taskProvider, bool showCompleted) {
-    final List<Task> filteredTasks = _searchQuery.isEmpty
-        ? (showCompleted
-            ? taskProvider.completedTasks
-            : taskProvider.remainingTasks)
-        : taskProvider.searchTasks(_searchQuery);
+    final List<Task> filteredTasks;
+    if (_searchQuery.isEmpty) {
+      filteredTasks = showCompleted
+          ? taskProvider.completedTasks
+          : taskProvider.remainingTasks;
+    } else {
+      final searchResults = taskProvider.searchTasks(_searchQuery);
+      filteredTasks = showCompleted
+          ? searchResults['completed']!
+          : searchResults['remaining']!;
+    }
 
     if (filteredTasks.isEmpty) {
       return Center(
-        child: Text('No tasks yet'),
+        child: Text(
+          _searchQuery.isEmpty
+              ? 'No tasks yet'
+              : 'No matching tasks in this category',
+        ),
       );
     }
 
@@ -282,13 +293,21 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Widget _buildOverdueTaskList(TaskProvider taskProvider) {
-    final List<Task> filteredTasks = _searchQuery.isEmpty
-        ? taskProvider.overdueTasks
-        : taskProvider.searchTasks(_searchQuery).where((task) => task.isOverdue).toList();
+    final List<Task> filteredTasks;
+    if (_searchQuery.isEmpty) {
+      filteredTasks = taskProvider.overdueTasks;
+    } else {
+      final searchResults = taskProvider.searchTasks(_searchQuery);
+      filteredTasks = searchResults['overdue']!;
+    }
 
     if (filteredTasks.isEmpty) {
       return Center(
-        child: Text('No overdue tasks'),
+        child: Text(
+          _searchQuery.isEmpty
+              ? 'No overdue tasks'
+              : 'No matching overdue tasks',
+        ),
       );
     }
 
