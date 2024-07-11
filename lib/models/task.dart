@@ -7,7 +7,8 @@ class Task {
   String category;
   DateTime? dueDate;
   bool isCompleted;
-  bool isPinned; 
+  bool isPinned;
+  bool isOverdue;
   final DateTime createdAt;
 
   Task({
@@ -17,9 +18,10 @@ class Task {
     required this.category,
     this.dueDate,
     this.isCompleted = false,
-    this.isPinned = false, 
+    this.isPinned = false,
+    this.isOverdue = false,
     DateTime? createdAt,
-  }) : 
+  }) :
     id = id ?? Uuid().v4(),
     createdAt = createdAt ?? DateTime.now();
 
@@ -29,7 +31,8 @@ class Task {
     String? category,
     DateTime? dueDate,
     bool? isCompleted,
-    bool? isPinned, 
+    bool? isPinned,
+    bool? isOverdue,
   }) {
     return Task(
       id: this.id,
@@ -38,7 +41,8 @@ class Task {
       category: category ?? this.category,
       dueDate: dueDate ?? this.dueDate,
       isCompleted: isCompleted ?? this.isCompleted,
-      isPinned: isPinned ?? this.isPinned, 
+      isPinned: isPinned ?? this.isPinned,
+      isOverdue: isOverdue ?? this.isOverdue,
       createdAt: this.createdAt,
     );
   }
@@ -51,7 +55,8 @@ class Task {
       'category': category,
       'dueDate': dueDate?.toIso8601String(),
       'isCompleted': isCompleted,
-      'isPinned': isPinned, 
+      'isPinned': isPinned,
+      'isOverdue': isOverdue,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -64,7 +69,8 @@ class Task {
       category: json['category'] as String? ?? 'Other',
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate'] as String) : null,
       isCompleted: json['isCompleted'] as bool? ?? false,
-      isPinned: json['isPinned'] as bool? ?? false, 
+      isPinned: json['isPinned'] as bool? ?? false,
+      isOverdue: json['isOverdue'] as bool? ?? false,
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
     );
   }
