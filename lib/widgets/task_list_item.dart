@@ -279,7 +279,7 @@ class _TaskListItemState extends State<TaskListItem> {
   }
 }
 
-class TaskReactionContainer extends StatelessWidget {
+class TaskReactionContainer extends StatefulWidget {
   final Task task;
   final VoidCallback onClose;
 
@@ -290,75 +290,129 @@ class TaskReactionContainer extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _TaskReactionContainerState createState() => _TaskReactionContainerState();
+}
+
+class _TaskReactionContainerState extends State<TaskReactionContainer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    );
+    _opacityAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _closeContainer() {
+    _controller.reverse().then((_) {
+      widget.onClose();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final categoryColor = Utils.getCategoryColor(task.category);
+    final categoryColor = Utils.getCategoryColor(widget.task.category);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      width: 150,
-      decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 5,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: 0.8 + (0.2 * _scaleAnimation.value),
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: Container(
+              width: 150,
+              decoration: BoxDecoration(
+                color: categoryColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    context,
+                    icon: widget.task.isPinned
+                        ? CupertinoIcons.pin_slash
+                        : CupertinoIcons.pin,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                    opacity: 1.0,
+                    onTap: () {
+                      if (widget.task.isPinned) {
+                        Provider.of<TaskProvider>(context, listen: false)
+                            .unpinTask(widget.task.id);
+                      } else {
+                        Provider.of<TaskProvider>(context, listen: false)
+                            .pinTask(widget.task.id);
+                      }
+                      _closeContainer();
+                    },
+                  ),
+                  _buildActionButton(
+                    context,
+                    icon: CupertinoIcons.pencil,
+                    color: categoryColor,
+                    opacity: 1.0,
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => EditTaskDialog(task: widget.task),
+                      );
+                      _closeContainer();
+                    },
+                  ),
+                  _buildActionButton(
+                    context,
+                    icon: CupertinoIcons.delete,
+                    color: Colors.red,
+                    opacity: 1.0,
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) =>
+                            DeleteTaskDialog(taskTitle: widget.task.title),
+                      ).then((result) {
+                        if (result == true) {
+                          Provider.of<TaskProvider>(context, listen: false)
+                              .deleteTask(widget.task.id);
+                        }
+                        _closeContainer();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildActionButton(
-            context,
-            icon: task.isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
-            color: isDarkMode ? Colors.white : Colors.black,
-            opacity: 1.0,
-            onTap: () {
-              if (task.isPinned) {
-                Provider.of<TaskProvider>(context, listen: false)
-                    .unpinTask(task.id);
-              } else {
-                Provider.of<TaskProvider>(context, listen: false)
-                    .pinTask(task.id);
-              }
-              onClose();
-            },
-          ),
-          _buildActionButton(
-            context,
-            icon: CupertinoIcons.pencil,
-            color: categoryColor,
-            opacity: 1.0,
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) => EditTaskDialog(task: task),
-              );
-              onClose();
-            },
-          ),
-          _buildActionButton(
-            context,
-            icon: CupertinoIcons.delete,
-            color: Colors.red,
-            opacity: 1.0,
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) => DeleteTaskDialog(taskTitle: task.title),
-              ).then((result) {
-                if (result == true) {
-                  Provider.of<TaskProvider>(context, listen: false)
-                      .deleteTask(task.id);
-                }
-                onClose();
-              });
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
