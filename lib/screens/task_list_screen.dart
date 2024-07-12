@@ -46,7 +46,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       builder: (context, taskProvider, child) {
         Map<String, List<Task>> categorizedTasks = _searchQuery.isEmpty
             ? {
-                'remaining': taskProvider.remainingTasks,
+                'pending': taskProvider.pendingTasks,
                 'completed': taskProvider.completedTasks,
                 'overdue': taskProvider.overdueTasks,
               }
@@ -107,7 +107,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                 curve: Curves.easeInOut);
                           },
                           child: Text(
-                            'Remaining Tasks (${categorizedTasks['remaining']!.length})',
+                            'Pending Tasks (${categorizedTasks['pending']!.length})',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -203,7 +203,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     _currentPageNotifier.value = index;
                   },
                   children: [
-                    _buildTaskList(categorizedTasks['remaining']!, false),
+                    _buildTaskList(categorizedTasks['pending']!, false),
                     _buildTaskList(categorizedTasks['completed']!, true),
                     _buildTaskList(categorizedTasks['overdue']!, false, isOverdue: true),
                   ],
@@ -242,7 +242,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       return Center(
         child: Text(
           _searchQuery.isEmpty
-              ? 'No ${isOverdue ? 'overdue' : showCompleted ? 'completed' : ''} tasks'
+              ? 'No ${isOverdue ? 'overdue' : showCompleted ? 'completed' : 'pending'} tasks'
               : 'No matching tasks in this category',
         ),
       );

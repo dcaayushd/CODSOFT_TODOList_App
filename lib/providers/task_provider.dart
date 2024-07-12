@@ -71,7 +71,7 @@ class TaskProvider with ChangeNotifier {
   List<Task> get completedTasks =>
       _sortTasks(tasks.where((task) => task.isCompleted).toList());
 
-  List<Task> get remainingTasks => _sortTasks(
+  List<Task> get pendingTasks => _sortTasks(
       tasks.where((task) => !task.isCompleted && !task.isOverdue).toList());
 
   TaskProvider() {
@@ -193,7 +193,7 @@ class TaskProvider with ChangeNotifier {
     DateTime? searchDate = parseDate(formattedQuery);
 
     Map<String, List<Task>> categorizedTasks = {
-      'remaining': [],
+      'pending': [],
       'completed': [],
       'overdue': [],
     };
@@ -220,12 +220,12 @@ class TaskProvider with ChangeNotifier {
         } else if (task.isCompleted) {
           categorizedTasks['completed']!.add(task);
         } else {
-          categorizedTasks['remaining']!.add(task);
+          categorizedTasks['pending']!.add(task);
         }
       }
     }
 
-    categorizedTasks['remaining'] = _sortTasks(categorizedTasks['remaining']!);
+    categorizedTasks['pending'] = _sortTasks(categorizedTasks['pending']!);
     categorizedTasks['completed'] = _sortTasks(categorizedTasks['completed']!);
     categorizedTasks['overdue'] = _sortTasks(categorizedTasks['overdue']!);
 
