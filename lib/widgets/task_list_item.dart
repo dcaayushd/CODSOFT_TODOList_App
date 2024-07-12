@@ -346,6 +346,10 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
               decoration: BoxDecoration(
                 color: categoryColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(25),
+                border: Border.all(
+                  color: categoryColor.withOpacity(0.1),
+                  width: 2,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
