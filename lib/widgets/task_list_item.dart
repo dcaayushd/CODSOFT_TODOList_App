@@ -12,28 +12,32 @@ import '../utils/utils.dart';
 
 class TaskListItem extends StatefulWidget {
   final Task task;
+  final bool isFirstTask;
   static OverlayEntry? currentOverlay;
+  static GlobalKey<_TaskListItemState>? activeTaskKey;
 
-  const TaskListItem({Key? key, required this.task}) : super(key: key);
+  const TaskListItem({Key? key, required this.task, this.isFirstTask = false})
+      : super(key: key);
 
   @override
   _TaskListItemState createState() => _TaskListItemState();
 
-  static void showReactionContainer(
-      BuildContext context, Task task, Offset position) {
+  static void showReactionContainer(BuildContext context, Task task,
+      GlobalKey<_TaskListItemState> taskKey, bool isFirstTask) {
     if (currentOverlay != null) {
       currentOverlay!.remove();
       currentOverlay = null;
+      if (activeTaskKey != null) {
+        activeTaskKey!.currentState?.setShifted(false);
+      }
     }
+
+    activeTaskKey = taskKey;
+    taskKey.currentState?.setShifted(true);
 
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
-
-    final centerPosition = Offset(
-      offset.dx + size.width / 2,
-      offset.dy + size.height / 2,
-    );
 
     currentOverlay = OverlayEntry(
       builder: (context) => Stack(
@@ -43,14 +47,15 @@ class TaskListItem extends StatefulWidget {
               onTap: () {
                 currentOverlay?.remove();
                 currentOverlay = null;
+                taskKey.currentState?.setShifted(false);
               },
               behavior: HitTestBehavior.opaque,
               child: Container(color: Colors.transparent),
             ),
           ),
           Positioned(
-            left: centerPosition.dx - 75,
-            top: centerPosition.dy - 25,
+            left: offset.dx + (size.width / 2) - 75,
+            top: isFirstTask ? offset.dy + size.height : offset.dy - 60,
             child: Material(
               color: Colors.transparent,
               child: TaskReactionContainer(
@@ -58,6 +63,7 @@ class TaskListItem extends StatefulWidget {
                 onClose: () {
                   currentOverlay?.remove();
                   currentOverlay = null;
+                  taskKey.currentState?.setShifted(false);
                 },
               ),
             ),
@@ -72,6 +78,7 @@ class TaskListItem extends StatefulWidget {
 
 class _TaskListItemState extends State<TaskListItem> {
   bool _isBlinking = false;
+  bool _isShifted = false;
   late Timer _timer;
 
   @override
@@ -105,6 +112,12 @@ class _TaskListItemState extends State<TaskListItem> {
         !widget.task.isCompleted;
   }
 
+  void setShifted(bool shifted) {
+    setState(() {
+      _isShifted = shifted;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
@@ -113,8 +126,8 @@ class _TaskListItemState extends State<TaskListItem> {
     return GestureDetector(
       onLongPressStart: (details) {
         if (!widget.task.isCompleted) {
-          TaskListItem.showReactionContainer(
-              context, widget.task, details.globalPosition);
+          TaskListItem.showReactionContainer(context, widget.task,
+              GlobalKey<_TaskListItemState>(), widget.isFirstTask);
         }
       },
       onTap: () {
@@ -125,142 +138,147 @@ class _TaskListItemState extends State<TaskListItem> {
           );
         }
       },
-      child: Stack(
-        children: [
-          Card(
-            elevation: 2,
-            margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            color:
-                isOverdue && _isBlinking ? Colors.red.withOpacity(0.1) : null,
-            child: ListTile(
-              leading: Checkbox(
-                value: widget.task.isCompleted,
-                onChanged: widget.task.isCompleted
-                    ? null
-                    : (bool? value) {
-                        Provider.of<TaskProvider>(context, listen: false)
-                            .toggleTaskCompletion(widget.task.id);
-                      },
-                activeColor: isOverdue ? Colors.red : null,
-              ),
-              title: Text(
-                widget.task.title,
-                style: TextStyle(
-                  decoration: widget.task.isCompleted
-                      ? TextDecoration.lineThrough
-                      : TextDecoration.none,
-                  decorationColor: widget.task.isCompleted
-                      ? brightness == Brightness.light
-                          ? Utils.getCategoryColor(widget.task.category)
-                              .withOpacity(1)
-                          : CupertinoColors.black
-                      : null,
-                  decorationThickness: 3,
-                  color: isOverdue ? Colors.red : null,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        margin: EdgeInsets.only(top: _isShifted ? 50 : 0),
+        child: Stack(
+          children: [
+            Card(
+              elevation: 2,
+              margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              color:
+                  isOverdue && _isBlinking ? Colors.red.withOpacity(0.1) : null,
+              child: ListTile(
+                leading: Checkbox(
+                  value: widget.task.isCompleted,
+                  onChanged: widget.task.isCompleted
+                      ? null
+                      : (bool? value) {
+                          Provider.of<TaskProvider>(context, listen: false)
+                              .toggleTaskCompletion(widget.task.id);
+                        },
+                  activeColor: isOverdue ? Colors.red : null,
                 ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (isOverdue)
+                title: Text(
+                  widget.task.title,
+                  style: TextStyle(
+                    decoration: widget.task.isCompleted
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                    decorationColor: widget.task.isCompleted
+                        ? brightness == Brightness.light
+                            ? Utils.getCategoryColor(widget.task.category)
+                                .withOpacity(1)
+                            : CupertinoColors.black
+                        : null,
+                    decorationThickness: 3,
+                    color: isOverdue ? Colors.red : null,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isOverdue)
+                      Text(
+                        'Task not completed on time!',
+                        style: TextStyle(
+                            color: Colors.red, fontWeight: FontWeight.bold),
+                      ),
                     Text(
-                      'Task not completed on time!',
+                      widget.task.description,
                       style: TextStyle(
-                          color: Colors.red, fontWeight: FontWeight.bold),
-                    ),
-                  Text(
-                    widget.task.description,
-                    style: TextStyle(
-                      color: isOverdue ? Colors.red : null,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.tag,
-                        size: 16,
                         color: isOverdue ? Colors.red : null,
                       ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          widget.task.category.isEmpty
-                              ? 'No category selected'
-                              : widget.task.category,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: isOverdue ? Colors.red : null,
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.tag,
+                          size: 16,
+                          color: isOverdue ? Colors.red : null,
+                        ),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            widget.task.category.isEmpty
+                                ? 'No category selected'
+                                : widget.task.category,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isOverdue ? Colors.red : null,
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(
-                        CupertinoIcons.time,
-                        size: 16,
-                        color: isOverdue ? Colors.red : null,
-                      ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          widget.task.dueDate != null
-                              ? DateFormat('MMM d, y HH:mm')
-                                  .format(widget.task.dueDate!)
-                              : 'No due date',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: isOverdue ? Colors.red : null,
+                        SizedBox(width: 8),
+                        Icon(
+                          CupertinoIcons.time,
+                          size: 16,
+                          color: isOverdue ? Colors.red : null,
+                        ),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            widget.task.dueDate != null
+                                ? DateFormat('MMM d, y HH:mm')
+                                    .format(widget.task.dueDate!)
+                                : 'No due date',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isOverdue ? Colors.red : null,
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                  ],
+                ),
+                trailing: widget.task.isCompleted
+                    ? null
+                    : IconButton(
+                        icon: Icon(
+                          CupertinoIcons.pencil,
+                          size: 35,
+                          color: isOverdue ? Colors.red : null,
+                        ),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) =>
+                                EditTaskDialog(task: widget.task),
+                          );
+                        },
                       ),
-                    ],
-                  ),
-                ],
+                tileColor: isOverdue
+                    ? Colors.red.withOpacity(0.1)
+                    : Utils.getCategoryColor(widget.task.category)
+                        .withOpacity(0.1),
               ),
-              trailing: widget.task.isCompleted
-                  ? null
-                  : IconButton(
-                      icon: Icon(
-                        CupertinoIcons.pencil,
-                        size: 35,
-                        color: isOverdue ? Colors.red : null,
-                      ),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) =>
-                              EditTaskDialog(task: widget.task),
-                        );
-                      },
-                    ),
-              tileColor: isOverdue
-                  ? Colors.red.withOpacity(0.1)
-                  : Utils.getCategoryColor(widget.task.category)
-                      .withOpacity(0.1),
             ),
-          ),
-          if (widget.task.isPinned && !widget.task.isCompleted)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: GestureDetector(
-                onTap: () {
-                  Provider.of<TaskProvider>(context, listen: false)
-                      .unpinTask(widget.task.id);
-                },
-                child: Icon(
-                  CupertinoIcons.pin_fill,
-                  color: isOverdue
-                      ? Colors.red
-                      : Theme.of(context).colorScheme.secondary,
+            if (widget.task.isPinned && !widget.task.isCompleted)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    Provider.of<TaskProvider>(context, listen: false)
+                        .unpinTask(widget.task.id);
+                  },
+                  child: Icon(
+                    CupertinoIcons.pin_fill,
+                    color: isOverdue
+                        ? Colors.red
+                        : Theme.of(context).colorScheme.secondary,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
+
 class TaskReactionContainer extends StatelessWidget {
   final Task task;
   final VoidCallback onClose;
@@ -274,20 +292,29 @@ class TaskReactionContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categoryColor = Utils.getCategoryColor(task.category);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
+      width: 150,
       decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.1),
+        color: categoryColor.withOpacity(0.2),
         borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 5,
+          ),
+        ],
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildActionButton(
             context,
             icon: task.isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
-            color: categoryColor,
-            opacity: 0.6,
+            color: isDarkMode ? Colors.white : Colors.black,
+            opacity: 1.0,
             onTap: () {
               if (task.isPinned) {
                 Provider.of<TaskProvider>(context, listen: false)
@@ -303,7 +330,7 @@ class TaskReactionContainer extends StatelessWidget {
             context,
             icon: CupertinoIcons.pencil,
             color: categoryColor,
-            opacity: 0.8,
+            opacity: 1.0,
             onTap: () {
               showDialog(
                 context: context,
@@ -315,7 +342,7 @@ class TaskReactionContainer extends StatelessWidget {
           _buildActionButton(
             context,
             icon: CupertinoIcons.delete,
-            color: categoryColor,
+            color: Colors.red,
             opacity: 1.0,
             onTap: () {
               showDialog(

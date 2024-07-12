@@ -281,7 +281,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
             duration: Duration(seconds: 1),
             curve: Curves.easeInOut,
             color: isNewlyAdded ? Colors.yellow.withOpacity(0.3) : null,
-            child: TaskListItem(task: task),
+            child: TaskListItem(task: task, isFirstTask: index == 0),
           ),
         );
       },
