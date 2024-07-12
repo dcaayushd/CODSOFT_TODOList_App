@@ -231,4 +231,20 @@ class TaskProvider with ChangeNotifier {
 
     return categorizedTasks;
   }
+
+  void setAlert(String taskId) {
+    final taskIndex = tasks.indexWhere((task) => task.id == taskId);
+    if (taskIndex != -1) {
+      tasks[taskIndex] = tasks[taskIndex].copyWith(hasAlert: true);
+      notifyListeners();
+    }
+  }
+
+  void removeAlert(String taskId) {
+    final taskIndex = tasks.indexWhere((task) => task.id == taskId);
+    if (taskIndex != -1) {
+      tasks[taskIndex] = tasks[taskIndex].copyWith(hasAlert: false);
+      notifyListeners();
+    }
+  }
 }
