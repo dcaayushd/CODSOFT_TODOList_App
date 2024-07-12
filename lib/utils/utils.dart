@@ -6,7 +6,7 @@ class Utils {
       case 'Learning':
         return Colors.blue;
       case 'Working':
-        return Colors.red;
+        return Colors.purple;
       case 'General':
         return Colors.green;
       case 'Other':

@@ -261,7 +261,6 @@ class _TaskListItemState extends State<TaskListItem> {
     );
   }
 }
-
 class TaskReactionContainer extends StatelessWidget {
   final Task task;
   final VoidCallback onClose;
@@ -278,7 +277,7 @@ class TaskReactionContainer extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[800],
+        color: categoryColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
@@ -287,7 +286,8 @@ class TaskReactionContainer extends StatelessWidget {
           _buildActionButton(
             context,
             icon: task.isPinned ? CupertinoIcons.pin_slash : CupertinoIcons.pin,
-            color: Colors.white,
+            color: categoryColor,
+            opacity: 0.6,
             onTap: () {
               if (task.isPinned) {
                 Provider.of<TaskProvider>(context, listen: false)
@@ -303,6 +303,7 @@ class TaskReactionContainer extends StatelessWidget {
             context,
             icon: CupertinoIcons.pencil,
             color: categoryColor,
+            opacity: 0.8,
             onTap: () {
               showDialog(
                 context: context,
@@ -314,7 +315,8 @@ class TaskReactionContainer extends StatelessWidget {
           _buildActionButton(
             context,
             icon: CupertinoIcons.delete,
-            color: Colors.red,
+            color: categoryColor,
+            opacity: 1.0,
             onTap: () {
               showDialog(
                 context: context,
@@ -336,12 +338,13 @@ class TaskReactionContainer extends StatelessWidget {
   Widget _buildActionButton(BuildContext context,
       {required IconData icon,
       required Color color,
+      required double opacity,
       required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(10),
-        child: Icon(icon, color: color, size: 24),
+        child: Icon(icon, color: color.withOpacity(opacity), size: 24),
       ),
     );
   }
