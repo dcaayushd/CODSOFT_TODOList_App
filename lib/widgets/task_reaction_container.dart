@@ -27,6 +27,8 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
+  late TaskProvider taskProvider;
+  bool _isClosing = false;
 
   @override
   void initState() {
@@ -47,15 +49,28 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    taskProvider = Provider.of<TaskProvider>(context, listen: false);
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
   void _closeContainer() {
-    _controller.reverse().then((_) {
-      widget.onClose();
-    });
+    if (!_isClosing && mounted) {
+      setState(() {
+        _isClosing = true;
+      });
+      _controller.reverse().then((_) {
+        if (mounted) {
+          widget.onClose();
+        }
+      });
+    }
   }
 
   @override
@@ -99,11 +114,9 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
                     opacity: 1.0,
                     onTap: () {
                       if (widget.task.isPinned) {
-                        Provider.of<TaskProvider>(context, listen: false)
-                            .unpinTask(widget.task.id);
+                        taskProvider.unpinTask(widget.task.id);
                       } else {
-                        Provider.of<TaskProvider>(context, listen: false)
-                            .pinTask(widget.task.id);
+                        taskProvider.pinTask(widget.task.id);
                       }
                       _closeContainer();
                     },
@@ -127,16 +140,15 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
                     color: Colors.red,
                     opacity: 1.0,
                     onTap: () {
+                      _closeContainer();
                       showDialog(
                         context: context,
                         builder: (context) =>
                             DeleteTaskDialog(taskTitle: widget.task.title),
                       ).then((result) {
                         if (result == true) {
-                          Provider.of<TaskProvider>(context, listen: false)
-                              .deleteTask(widget.task.id);
+                          taskProvider.deleteTask(widget.task.id);
                         }
-                        _closeContainer();
                       });
                     },
                   ),
