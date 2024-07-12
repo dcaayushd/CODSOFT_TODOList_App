@@ -97,65 +97,17 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 valueListenable: _currentPageNotifier,
                 builder: (context, currentPage, child) {
                   return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () {
-                            _pageController.animateToPage(0,
-                                duration: Duration(milliseconds: 300),
-                                curve: Curves.easeInOut);
-                          },
-                          child: Text(
-                            'Pending Tasks (${categorizedTasks['pending']!.length})',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: currentPage == 0
-                                  ? Theme.of(context).colorScheme.secondary
-                                  : Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () {
-                            _pageController.animateToPage(1,
-                                duration: Duration(milliseconds: 300),
-                                curve: Curves.easeInOut);
-                          },
-                          child: Text(
-                            'Completed Tasks (${categorizedTasks['completed']!.length})',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: currentPage == 1
-                                  ? Theme.of(context).colorScheme.secondary
-                                  : Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () {
-                            _pageController.animateToPage(2,
-                                duration: Duration(milliseconds: 300),
-                                curve: Curves.easeInOut);
-                          },
-                          child: Text(
-                            'Overdue Tasks (${categorizedTasks['overdue']!.length})',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: currentPage == 2
-                                  ? Theme.of(context).colorScheme.secondary
-                                  : Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ),
+                      _buildCategoryButton(context, 'Pending',
+                          categorizedTasks['pending']!.length, 0, currentPage),
+                      _buildCategoryButton(
+                          context,
+                          'Completed',
+                          categorizedTasks['completed']!.length,
+                          1,
+                          currentPage),
+                      _buildCategoryButton(context, 'Overdue',
+                          categorizedTasks['overdue']!.length, 2, currentPage),
                     ],
                   );
                 },
@@ -205,7 +157,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   children: [
                     _buildTaskList(categorizedTasks['pending']!, false),
                     _buildTaskList(categorizedTasks['completed']!, true),
-                    _buildTaskList(categorizedTasks['overdue']!, false, isOverdue: true),
+                    _buildTaskList(categorizedTasks['overdue']!, false,
+                        isOverdue: true),
                   ],
                 ),
               ),
@@ -237,7 +190,48 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  Widget _buildTaskList(List<Task> tasks, bool showCompleted, {bool isOverdue = false}) {
+  Widget _buildCategoryButton(BuildContext context, String title, int count,
+      int page, int currentPage) {
+    return Expanded(
+      child: TextButton(
+        onPressed: () {
+          _pageController.animateToPage(page,
+              duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+        },
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$title ',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: currentPage == page
+                      ? Theme.of(context).colorScheme.secondary
+                      : Colors.grey,
+                ),
+              ),
+              Text(
+                '($count)',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: currentPage == page
+                      ? Theme.of(context).colorScheme.secondary
+                      : Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskList(List<Task> tasks, bool showCompleted,
+      {bool isOverdue = false}) {
     if (tasks.isEmpty) {
       return Center(
         child: Text(
@@ -275,7 +269,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
             return result == true;
           },
           onDismissed: (direction) {
-            Provider.of<TaskProvider>(context, listen: false).deleteTask(task.id);
+            Provider.of<TaskProvider>(context, listen: false)
+                .deleteTask(task.id);
           },
           child: AnimatedContainer(
             duration: Duration(seconds: 1),
