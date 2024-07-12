@@ -10,6 +10,7 @@ class Task {
   bool isPinned;
   bool isOverdue;
   final DateTime createdAt;
+    final bool hasAlert;
 
   Task({
     String? id,
@@ -21,6 +22,7 @@ class Task {
     this.isPinned = false,
     this.isOverdue = false,
     DateTime? createdAt,
+   this.hasAlert = false,
   }) :
     id = id ?? Uuid().v4(),
     createdAt = createdAt ?? DateTime.now();
@@ -33,6 +35,7 @@ class Task {
     bool? isCompleted,
     bool? isPinned,
     bool? isOverdue,
+    bool? hasAlert,
   }) {
     return Task(
       id: this.id,
@@ -44,6 +47,7 @@ class Task {
       isPinned: isPinned ?? this.isPinned,
       isOverdue: isOverdue ?? this.isOverdue,
       createdAt: this.createdAt,
+      hasAlert: hasAlert ?? this.hasAlert,
     );
   }
 
@@ -58,6 +62,8 @@ class Task {
       'isPinned': isPinned,
       'isOverdue': isOverdue,
       'createdAt': createdAt.toIso8601String(),
+      'hasAlert': hasAlert,
+      
     };
   }
 
@@ -72,6 +78,7 @@ class Task {
       isPinned: json['isPinned'] as bool? ?? false,
       isOverdue: json['isOverdue'] as bool? ?? false,
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
+      hasAlert: json['hasAlert'] as bool? ?? false,
     );
   }
 }
