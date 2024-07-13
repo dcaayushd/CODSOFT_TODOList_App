@@ -24,6 +24,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   late bool _isPinned;
+  bool _hasAlert = false;
+  DateTime? _alertDateTime;
 
   @override
   void initState() {
@@ -37,6 +39,10 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       _selectedTime = TimeOfDay.fromDateTime(widget.task.dueDate!);
     }
     _isPinned = widget.task.isPinned;
+    _hasAlert = widget.task.hasAlert;
+    if (_hasAlert && widget.task.alertDateTime != null) {
+      _alertDateTime = widget.task.alertDateTime;
+    }
   }
 
   @override
@@ -48,6 +54,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CupertinoTextField(
               controller: _titleController,
@@ -112,6 +119,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               ),
             ),
             SizedBox(height: 16),
+            Text('Due Date and Time',
+                style: CupertinoTheme.of(context).textTheme.textStyle),
             Row(
               children: [
                 Expanded(
@@ -134,52 +143,116 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                 ),
               ],
             ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Text('Set Alert',
+                    style: CupertinoTheme.of(context).textTheme.textStyle),
+                SizedBox(width: 8),
+                CupertinoSwitch(
+                  value: _hasAlert,
+                  onChanged: (value) {
+                    setState(() {
+                      _hasAlert = value;
+                      if (_hasAlert && _alertDateTime == null) {
+                        _alertDateTime =
+                            _selectedDate?.subtract(Duration(minutes: 30));
+                      }
+                    });
+                  },
+                ),
+              ],
+            ),
+            if (_hasAlert) ...[
+              SizedBox(height: 8),
+              Text('Alert Date and Time',
+                  style: CupertinoTheme.of(context).textTheme.textStyle),
+              Row(
+                children: [
+                  Expanded(
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _showAlertDatePicker(context),
+                      child: Text(_alertDateTime == null
+                          ? 'Select Date'
+                          : DateFormat('MMM d, y').format(_alertDateTime!)),
+                    ),
+                  ),
+                  Expanded(
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _showAlertTimePicker(context),
+                      child: Text(_alertDateTime == null
+                          ? 'Select Time'
+                          : DateFormat('HH:mm').format(_alertDateTime!)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
       actions: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            SizedBox(
-              width: 80,
-              child: CupertinoDialogAction(
-                child: Text('Cancel'),
-                onPressed: () => Navigator.of(context).pop(),
-                isDestructiveAction: true,
-              ),
-            ),
-            SizedBox(
-              width: 80,
-              child: CupertinoDialogAction(
-                child: Text('Save'),
-                isDefaultAction: true,
-                onPressed: () {
-                  if (_titleController.text.isNotEmpty) {
-                    final updatedTask = Task(
-                      id: widget.task.id,
-                      title: _titleController.text,
-                      description: _descriptionController.text,
-                      category: _selectedCategory,
-                      dueDate: _selectedDate != null && _selectedTime != null
-                          ? DateTime(
-                              _selectedDate!.year,
-                              _selectedDate!.month,
-                              _selectedDate!.day,
-                              _selectedTime!.hour,
-                              _selectedTime!.minute,
-                            )
-                          : null,
-                      isCompleted: widget.task.isCompleted,
-                      isPinned: _isPinned,
-                    );
-                    taskProvider.updateTask(updatedTask);
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-            ),
-          ],
+        TextButton(
+          child: Text('Cancel'),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.red,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        TextButton(
+          child: Text('Save'),
+          onPressed: () async {
+            if (_titleController.text.isNotEmpty) {
+              final dueDate = _selectedDate != null && _selectedTime != null
+                  ? DateTime(
+                      _selectedDate!.year,
+                      _selectedDate!.month,
+                      _selectedDate!.day,
+                      _selectedTime!.hour,
+                      _selectedTime!.minute,
+                    )
+                  : null;
+
+              if (_hasAlert && _alertDateTime != null && dueDate != null) {
+                if (_alertDateTime!.isAfter(dueDate)) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Invalid Alert Time'),
+                      content: Text('Alert time cannot be after the due date.'),
+                      actions: [
+                        TextButton(
+                          child: Text('OK'),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  );
+                  return;
+                }
+              }
+
+              final updatedTask = Task(
+                id: widget.task.id,
+                title: _titleController.text,
+                description: _descriptionController.text,
+                category: _selectedCategory,
+                dueDate: dueDate,
+                isCompleted: widget.task.isCompleted,
+                isPinned: _isPinned,
+                hasAlert: _hasAlert,
+                alertDateTime: _hasAlert ? _alertDateTime : null,
+                isOverdue: widget.task.isOverdue, 
+              );
+
+              await Provider.of<TaskProvider>(context, listen: false)
+                  .updateTask(updatedTask);
+
+              Navigator.of(context).pop();
+            }
+          },
         ),
       ],
     );
@@ -192,7 +265,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         height: 200,
         color: CupertinoTheme.of(context).brightness == Brightness.light
             ? CupertinoColors.systemBackground
-            : Colors.black,
+            : CupertinoColors.black,
         child: DateTimePicker(
           initialDateTime: _selectedDate ?? DateTime.now(),
           mode: CupertinoDatePickerMode.date,
@@ -203,13 +276,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
           },
         ),
       ),
-    ).then((_) {
-      if (_selectedDate == null) {
-        setState(() {
-          _selectedDate = DateTime.now();
-        });
-      }
-    });
+    );
   }
 
   void _showTimePicker(BuildContext context) {
@@ -219,7 +286,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
         height: 200,
         color: CupertinoTheme.of(context).brightness == Brightness.light
             ? CupertinoColors.systemBackground
-            : Colors.black,
+            : CupertinoColors.black,
         child: DateTimePicker(
           initialDateTime: _selectedTime != null
               ? DateTime(2023, 1, 1, _selectedTime!.hour, _selectedTime!.minute)
@@ -232,19 +299,60 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
           },
         ),
       ),
-    ).then((_) {
-      if (_selectedTime == null) {
-        setState(() {
-          _selectedTime = TimeOfDay.now();
-        });
-      }
-    });
+    );
   }
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
+  void _showAlertDatePicker(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: 200,
+        color: CupertinoTheme.of(context).brightness == Brightness.light
+            ? CupertinoColors.systemBackground
+            : CupertinoColors.black,
+        child: DateTimePicker(
+          initialDateTime: _alertDateTime ?? DateTime.now(),
+          mode: CupertinoDatePickerMode.date,
+          onDateTimeChanged: (val) {
+            setState(() {
+              _alertDateTime = DateTime(
+                val.year,
+                val.month,
+                val.day,
+                _alertDateTime?.hour ?? 0,
+                _alertDateTime?.minute ?? 0,
+              );
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showAlertTimePicker(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: 200,
+        color: CupertinoTheme.of(context).brightness == Brightness.light
+            ? CupertinoColors.systemBackground
+            : CupertinoColors.black,
+        child: DateTimePicker(
+          initialDateTime: _alertDateTime ?? DateTime.now(),
+          mode: CupertinoDatePickerMode.time,
+          onDateTimeChanged: (val) {
+            setState(() {
+              _alertDateTime = DateTime(
+                _alertDateTime?.year ?? DateTime.now().year,
+                _alertDateTime?.month ?? DateTime.now().month,
+                _alertDateTime?.day ?? DateTime.now().day,
+                val.hour,
+                val.minute,
+              );
+            });
+          },
+        ),
+      ),
+    );
   }
 }
