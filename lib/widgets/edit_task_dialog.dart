@@ -184,7 +184,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                       onPressed: () => _showAlertTimePicker(context),
                       child: Text(_alertDateTime == null
                           ? 'Select Time'
-                          : DateFormat('HH:mm').format(_alertDateTime!)),
+                          : DateFormat('h:mm a').format(_alertDateTime!)),
                     ),
                   ),
                 ],
@@ -244,7 +244,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                 isPinned: _isPinned,
                 hasAlert: _hasAlert,
                 alertDateTime: _hasAlert ? _alertDateTime : null,
-                isOverdue: widget.task.isOverdue, 
+                isOverdue: widget.task.isOverdue,
               );
 
               await Provider.of<TaskProvider>(context, listen: false)

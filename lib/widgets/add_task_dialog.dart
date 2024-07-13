@@ -19,6 +19,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   String _selectedCategory = '';
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  bool _hasAlert = false;
+  DateTime? _alertDateTime;
 
   @override
   void initState() {
@@ -36,6 +38,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CupertinoTextField(
               controller: _titleController,
@@ -100,6 +103,8 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               ),
             ),
             SizedBox(height: 16),
+            Text('Due Date and Time',
+                style: CupertinoTheme.of(context).textTheme.textStyle),
             Row(
               children: [
                 Expanded(
@@ -128,46 +133,110 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             ),
             SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: CupertinoDialogAction(
-                    child: Text('Cancel', style: TextStyle(color: Colors.red)),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                Expanded(
-                  child: CupertinoDialogAction(
-                    child: Text('Add'),
-                    isDefaultAction: true,
-                    onPressed: () {
-                      if (_titleController.text.isNotEmpty) {
-                        final newTask = Task(
-                          title: _titleController.text,
-                          description: _descriptionController.text,
-                          category: _selectedCategory,
-                          dueDate:
-                              _selectedDate != null && _selectedTime != null
-                                  ? DateTime(
-                                      _selectedDate!.year,
-                                      _selectedDate!.month,
-                                      _selectedDate!.day,
-                                      _selectedTime!.hour,
-                                      _selectedTime!.minute,
-                                    )
-                                  : null,
-                        );
-                        taskProvider.addTask(newTask);
-                        Navigator.of(context).pop();
+                Text('Set Alert',
+                    style: CupertinoTheme.of(context).textTheme.textStyle),
+                SizedBox(width: 8),
+                CupertinoSwitch(
+                  value: _hasAlert,
+                  onChanged: (value) {
+                    setState(() {
+                      _hasAlert = value;
+                      if (_hasAlert && _alertDateTime == null) {
+                        _alertDateTime =
+                            _selectedDate?.subtract(Duration(minutes: 30));
                       }
-                    },
-                  ),
+                    });
+                  },
                 ),
               ],
             ),
+            if (_hasAlert) ...[
+              SizedBox(height: 8),
+              Text('Alert Date and Time',
+                  style: CupertinoTheme.of(context).textTheme.textStyle),
+              Row(
+                children: [
+                  Expanded(
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _showAlertDatePicker(context),
+                      child: Text(_alertDateTime == null
+                          ? 'Select Date'
+                          : DateFormat('MMM d, y').format(_alertDateTime!)),
+                    ),
+                  ),
+                  Expanded(
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _showAlertTimePicker(context),
+                      child: Text(_alertDateTime == null
+                          ? 'Select Time'
+                          : DateFormat('h:mm a').format(_alertDateTime!)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
+      actions: [
+        TextButton(
+          child: Text('Cancel'),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.red,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        TextButton(
+          child: Text('Add'),
+          onPressed: () async {
+            if (_titleController.text.isNotEmpty) {
+              final dueDate = _selectedDate != null && _selectedTime != null
+                  ? DateTime(
+                      _selectedDate!.year,
+                      _selectedDate!.month,
+                      _selectedDate!.day,
+                      _selectedTime!.hour,
+                      _selectedTime!.minute,
+                    )
+                  : null;
+
+              if (_hasAlert && _alertDateTime != null && dueDate != null) {
+                if (_alertDateTime!.isAfter(dueDate)) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Invalid Alert Time'),
+                      content: Text('Alert time cannot be after the due date.'),
+                      actions: [
+                        TextButton(
+                          child: Text('OK'),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  );
+                  return;
+                }
+              }
+
+              final newTask = Task(
+                title: _titleController.text,
+                description: _descriptionController.text,
+                category: _selectedCategory,
+                dueDate: dueDate,
+                hasAlert: _hasAlert,
+                alertDateTime: _hasAlert ? _alertDateTime : null,
+              );
+
+              await taskProvider.addTask(newTask);
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -180,7 +249,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             ? CupertinoColors.systemBackground
             : Colors.black,
         child: DateTimePicker(
-          initialDateTime: _selectedDate,
+          initialDateTime: _selectedDate ?? DateTime.now(),
           mode: CupertinoDatePickerMode.date,
           onDateTimeChanged: (val) {
             setState(() {
@@ -222,6 +291,72 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       if (_selectedTime == null) {
         setState(() {
           _selectedTime = TimeOfDay.now();
+        });
+      }
+    });
+  }
+
+  void _showAlertDatePicker(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: 200,
+        color: CupertinoTheme.of(context).brightness == Brightness.light
+            ? CupertinoColors.systemBackground
+            : CupertinoColors.black,
+        child: DateTimePicker(
+          initialDateTime: _alertDateTime ?? DateTime.now(),
+          mode: CupertinoDatePickerMode.date,
+          onDateTimeChanged: (val) {
+            setState(() {
+              _alertDateTime = DateTime(
+                val.year,
+                val.month,
+                val.day,
+                _alertDateTime?.hour ?? 0,
+                _alertDateTime?.minute ?? 0,
+              );
+            });
+          },
+        ),
+      ),
+    ).then((_) {
+      if (_alertDateTime == null) {
+        setState(() {
+          _alertDateTime = DateTime.now();
+        });
+      }
+    });
+  }
+
+  void _showAlertTimePicker(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: 200,
+        color: CupertinoTheme.of(context).brightness == Brightness.light
+            ? CupertinoColors.systemBackground
+            : CupertinoColors.black,
+        child: DateTimePicker(
+          initialDateTime: _alertDateTime ?? DateTime.now(),
+          mode: CupertinoDatePickerMode.time,
+          onDateTimeChanged: (val) {
+            setState(() {
+              _alertDateTime = DateTime(
+                _alertDateTime?.year ?? DateTime.now().year,
+                _alertDateTime?.month ?? DateTime.now().month,
+                _alertDateTime?.day ?? DateTime.now().day,
+                val.hour,
+                val.minute,
+              );
+            });
+          },
+        ),
+      ),
+    ).then((_) {
+      if (_alertDateTime == null) {
+        setState(() {
+          _alertDateTime = DateTime.now();
         });
       }
     });
