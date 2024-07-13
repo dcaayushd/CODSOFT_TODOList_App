@@ -10,6 +10,7 @@ import '../providers/task_provider.dart';
 import '../utils/utils.dart';
 import '../widgets/edit_task_dialog.dart';
 import '../widgets/task_reaction_container.dart';
+import '../services/notification_service.dart';
 
 class TaskListItem extends StatefulWidget {
   final Task task;
@@ -55,7 +56,7 @@ class TaskListItem extends StatefulWidget {
             ),
           ),
           Positioned(
-            left: offset.dx + (size.width / 2) - 75,
+            left: offset.dx + (size.width / 2) - 100,
             top: isFirstTask ? offset.dy + size.height : offset.dy - 60,
             child: Material(
               color: Colors.transparent,
@@ -81,11 +82,14 @@ class _TaskListItemState extends State<TaskListItem> {
   bool _isBlinking = false;
   bool _isShifted = false;
   late Timer _timer;
+  late NotificationService _notificationService;
 
   @override
   void initState() {
     super.initState();
     _timer = Timer(Duration.zero, () {});
+    _notificationService = NotificationService();
+    _notificationService.init();
 
     if (isOverdue) {
       _startBlinking();
@@ -117,6 +121,24 @@ class _TaskListItemState extends State<TaskListItem> {
     setState(() {
       _isShifted = shifted;
     });
+  }
+
+  Widget _buildAlertIcon() {
+    if (widget.task.hasAlert) {
+      return GestureDetector(
+        onTap: () {
+          Provider.of<TaskProvider>(context, listen: false)
+              .toggleTaskAlert(widget.task.id);
+        },
+        child: Icon(
+          CupertinoIcons.bell_fill,
+          size: 20,
+          color: Theme.of(context).colorScheme.secondary,
+        ),
+      );
+    } else {
+      return SizedBox.shrink();
+    }
   }
 
   @override
@@ -272,6 +294,12 @@ class _TaskListItemState extends State<TaskListItem> {
                         : Theme.of(context).colorScheme.secondary,
                   ),
                 ),
+              ),
+            if (!widget.task.isCompleted)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: _buildAlertIcon(),
               ),
           ],
         ),
