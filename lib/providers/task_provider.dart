@@ -109,18 +109,24 @@ class TaskProvider with ChangeNotifier {
   }
 
   Future<void> updateTask(Task updatedTask) async {
-    int index =
-        _taskService.getTasks().indexWhere((task) => task.id == updatedTask.id);
-    if (index != -1) {
-      Task existingTask = _taskService.getTasks()[index];
-      updatedTask.isPinned = existingTask.isPinned;
-      _taskService.updateTask(updatedTask);
-      _notificationService.cancelNotification(existingTask);
+  int index = _taskService.getTasks().indexWhere((task) => task.id == updatedTask.id);
+  if (index != -1) {
+    Task existingTask = _taskService.getTasks()[index];
+    // Preserve the isPinned status from the existing task
+    updatedTask = updatedTask.copyWith(isPinned: existingTask.isPinned);
+    
+    _taskService.updateTask(updatedTask);
+    
+    // Cancel existing notification and schedule a new one if needed
+    _notificationService.cancelNotification(existingTask);
+    if (updatedTask.hasAlert) {
       _notificationService.scheduleNotification(updatedTask);
-      await _saveTasks();
-      notifyListeners();
     }
+    
+    await _saveTasks();
+    notifyListeners();
   }
+}
 
   Future<void> deleteTask(String id) async {
     _taskService.deleteTask(id);
@@ -244,6 +250,32 @@ class TaskProvider with ChangeNotifier {
     final taskIndex = tasks.indexWhere((task) => task.id == taskId);
     if (taskIndex != -1) {
       tasks[taskIndex] = tasks[taskIndex].copyWith(hasAlert: false);
+      notifyListeners();
+    }
+  }
+
+  Future<void> toggleTaskAlert(String id) async {
+    Task task = tasks.firstWhere((task) => task.id == id);
+    task.hasAlert = !task.hasAlert;
+    if (task.hasAlert) {
+      _notificationService.scheduleNotification(task);
+    } else {
+      _notificationService.cancelNotification(task);
+    }
+    _taskService.updateTask(task);
+    await _saveTasks();
+    notifyListeners();
+  }
+
+  Future<void> setAlertDateTime(String taskId, DateTime alertDateTime) async {
+    final taskIndex = tasks.indexWhere((task) => task.id == taskId);
+    if (taskIndex != -1) {
+      tasks[taskIndex] = tasks[taskIndex].copyWith(
+        hasAlert: true,
+        alertDateTime: alertDateTime,
+      );
+      _notificationService.scheduleNotification(tasks[taskIndex]);
+      await _saveTasks();
       notifyListeners();
     }
   }
