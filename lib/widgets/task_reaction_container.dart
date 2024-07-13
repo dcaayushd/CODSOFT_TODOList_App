@@ -79,8 +79,9 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
 
   void _toggleAlert() {
     if (widget.task.hasAlert) {
-      taskProvider.updateTask(widget.task.id,
-          hasAlert: false, alertDateTime: null);
+      final updatedTask =
+          widget.task.copyWith(hasAlert: false, alertDateTime: null);
+      taskProvider.updateTask(updatedTask);
       notificationService.cancelNotification(widget.task);
       _closeContainer();
     } else {
@@ -107,17 +108,14 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
                 : DateTime.now().add(Duration(minutes: 30)),
             maximumDate: widget.task.dueDate,
             mode: CupertinoDatePickerMode.dateAndTime,
-            use24hFormat: true,
+            use24hFormat: false,
             onDateTimeChanged: (DateTime newDateTime) {
-              taskProvider.updateTask(
-                widget.task.id,
+              final updatedTask = widget.task.copyWith(
                 hasAlert: true,
                 alertDateTime: newDateTime,
               );
-              notificationService.scheduleNotification(widget.task.copyWith(
-                hasAlert: true,
-                alertDateTime: newDateTime,
-              ));
+              taskProvider.updateTask(updatedTask);
+              notificationService.scheduleNotification(updatedTask);
             },
           ),
         ),
