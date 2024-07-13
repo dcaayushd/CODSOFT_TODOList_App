@@ -7,6 +7,7 @@
 // import '../utils/utils.dart';
 // import '../widgets/delete_task_dialog.dart';
 // import '../widgets/edit_task_dialog.dart';
+// import '../services/notification_service.dart';
 
 // class TaskReactionContainer extends StatefulWidget {
 //   final Task task;
@@ -28,6 +29,7 @@
 //   late Animation<double> _scaleAnimation;
 //   late Animation<double> _opacityAnimation;
 //   late TaskProvider taskProvider;
+//   late NotificationService notificationService;
 //   bool _isClosing = false;
 
 //   @override
@@ -46,6 +48,8 @@
 //       curve: Curves.easeIn,
 //     );
 //     _controller.forward();
+//     notificationService = NotificationService();
+//     notificationService.init();
 //   }
 
 //   @override
@@ -73,6 +77,47 @@
 //     }
 //   }
 
+//   void _toggleAlert() {
+//     if (widget.task.hasAlert) {
+//       // Disable alert
+//       taskProvider.toggleTaskAlert(widget.task.id);
+//       notificationService.cancelNotification(widget.task);
+//     } else {
+//       // Enable alert and show date-time picker
+//       _showDateTimePicker();
+//     }
+//     _closeContainer();
+//   }
+
+//   void _showDateTimePicker() {
+//     showCupertinoModalPopup(
+//       context: context,
+//       builder: (BuildContext context) => Container(
+//         height: 216,
+//         padding: const EdgeInsets.only(top: 6.0),
+//         margin: EdgeInsets.only(
+//           bottom: MediaQuery.of(context).viewInsets.bottom,
+//         ),
+//         color: CupertinoColors.systemBackground.resolveFrom(context),
+//         child: SafeArea(
+//           top: false,
+//           child: CupertinoDatePicker(
+//             initialDateTime: widget.task.dueDate != null
+//                 ? widget.task.dueDate!.subtract(Duration(minutes: 30))
+//                 : DateTime.now().add(Duration(minutes: 30)),
+//             maximumDate: widget.task.dueDate,
+//             mode: CupertinoDatePickerMode.dateAndTime,
+//             use24hFormat: true,
+//             onDateTimeChanged: (DateTime newDateTime) {
+//               taskProvider.setAlertDateTime(widget.task.id, newDateTime);
+//               notificationService.scheduleNotification(widget.task);
+//             },
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
 //   @override
 //   Widget build(BuildContext context) {
 //     final categoryColor = Utils.getCategoryColor(widget.task.category);
@@ -86,7 +131,7 @@
 //           child: Opacity(
 //             opacity: _opacityAnimation.value,
 //             child: Container(
-//               width: 150,
+//               width: 200,
 //               decoration: BoxDecoration(
 //                 color: categoryColor.withOpacity(0.2),
 //                 borderRadius: BorderRadius.circular(25),
@@ -123,6 +168,15 @@
 //                   ),
 //                   _buildActionButton(
 //                     context,
+//                     icon: widget.task.hasAlert
+//                         ? CupertinoIcons.bell_fill
+//                         : CupertinoIcons.bell,
+//                     color: isDarkMode ? Colors.white : Colors.black,
+//                     opacity: 1.0,
+//                     onTap: _toggleAlert,
+//                   ),
+//                   _buildActionButton(
+//                     context,
 //                     icon: CupertinoIcons.pencil,
 //                     color: categoryColor,
 //                     opacity: 1.0,
@@ -148,6 +202,7 @@
 //                       ).then((result) {
 //                         if (result == true) {
 //                           taskProvider.deleteTask(widget.task.id);
+//                           notificationService.cancelNotification(widget.task);
 //                         }
 //                       });
 //                     },
@@ -255,6 +310,54 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
     }
   }
 
+  void _toggleAlert() {
+    if (widget.task.hasAlert) {
+      taskProvider.updateTask(widget.task.id,
+          hasAlert: false, alertDateTime: null);
+      notificationService.cancelNotification(widget.task);
+      _closeContainer();
+    } else {
+      _closeContainer();
+      _showDateTimePicker();
+    }
+  }
+
+  void _showDateTimePicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => Container(
+        height: 216,
+        padding: const EdgeInsets.only(top: 6.0),
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: SafeArea(
+          top: false,
+          child: CupertinoDatePicker(
+            initialDateTime: widget.task.dueDate != null
+                ? widget.task.dueDate!.subtract(Duration(minutes: 30))
+                : DateTime.now().add(Duration(minutes: 30)),
+            maximumDate: widget.task.dueDate,
+            mode: CupertinoDatePickerMode.dateAndTime,
+            use24hFormat: true,
+            onDateTimeChanged: (DateTime newDateTime) {
+              taskProvider.updateTask(
+                widget.task.id,
+                hasAlert: true,
+                alertDateTime: newDateTime,
+              );
+              notificationService.scheduleNotification(widget.task.copyWith(
+                hasAlert: true,
+                alertDateTime: newDateTime,
+              ));
+            },
+          ),
+        ),
+      ),
+    ).then((_) => _closeContainer());
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoryColor = Utils.getCategoryColor(widget.task.category);
@@ -310,16 +413,7 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
                         : CupertinoIcons.bell,
                     color: isDarkMode ? Colors.white : Colors.black,
                     opacity: 1.0,
-                    onTap: () {
-                      if (widget.task.hasAlert) {
-                        taskProvider.removeAlert(widget.task.id);
-                        notificationService.cancelNotification(widget.task);
-                      } else {
-                        taskProvider.setAlert(widget.task.id);
-                        notificationService.scheduleNotification(widget.task);
-                      }
-                      _closeContainer();
-                    },
+                    onTap: _toggleAlert,
                   ),
                   _buildActionButton(
                     context,
@@ -340,7 +434,6 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
                     color: Colors.red,
                     opacity: 1.0,
                     onTap: () {
-                      _closeContainer();
                       showDialog(
                         context: context,
                         builder: (context) =>
