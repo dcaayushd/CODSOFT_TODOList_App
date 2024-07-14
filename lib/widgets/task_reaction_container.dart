@@ -183,7 +183,7 @@ class TaskReactionContainerState extends State<TaskReactionContainer>
                   _buildActionButton(
                     context,
                     icon: CupertinoIcons.pencil,
-                    color: categoryColor,
+                    color: categoryColor.withOpacity(1),
                     opacity: 1.0,
                     onTap: () {
                       showDialog(
