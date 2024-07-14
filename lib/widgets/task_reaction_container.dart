@@ -12,11 +12,13 @@ import '../services/notification_service.dart';
 class TaskReactionContainer extends StatefulWidget {
   final Task task;
   final VoidCallback onClose;
+  final Function() onPinAnimationTrigger;
 
   const TaskReactionContainer({
     Key? key,
     required this.task,
     required this.onClose,
+    required this.onPinAnimationTrigger,
   }) : super(key: key);
 
   @override
@@ -85,12 +87,37 @@ class TaskReactionContainerState extends State<TaskReactionContainer>
       notificationService.cancelNotification(widget.task);
       _closeContainer();
     } else {
-      _closeContainer();
-      _showDateTimePicker();
+      if (isOverdue) {
+        // For overdue tasks, just turn off the alert
+        final updatedTask =
+            widget.task.copyWith(hasAlert: false, alertDateTime: null);
+        taskProvider.updateTask(updatedTask);
+        notificationService.cancelNotification(widget.task);
+        _closeContainer();
+      } else {
+        _closeContainer();
+        _showAlertDateTimePicker();
+      }
     }
   }
 
-  void _showDateTimePicker() {
+  void _showAlertDateTimePicker() {
+    final now = DateTime.now();
+    DateTime initialAlertDateTime;
+    if (widget.task.dueDate != null) {
+      initialAlertDateTime =
+          widget.task.dueDate!.subtract(const Duration(minutes: 30));
+    } else {
+      initialAlertDateTime = now.add(const Duration(minutes: 30));
+    }
+
+    final updatedTask = widget.task.copyWith(
+      hasAlert: true,
+      alertDateTime: initialAlertDateTime,
+    );
+    taskProvider.updateTask(updatedTask);
+    notificationService.scheduleNotification(updatedTask);
+
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => Container(
@@ -103,10 +130,9 @@ class TaskReactionContainerState extends State<TaskReactionContainer>
         child: SafeArea(
           top: false,
           child: CupertinoDatePicker(
-            initialDateTime: widget.task.dueDate != null
-                ? widget.task.dueDate!.subtract(const Duration(minutes: 30))
-                : DateTime.now().add(const Duration(minutes: 30)),
+            initialDateTime: initialAlertDateTime,
             maximumDate: widget.task.dueDate,
+            minimumDate: now,
             mode: CupertinoDatePickerMode.dateAndTime,
             use24hFormat: false,
             onDateTimeChanged: (DateTime newDateTime) {
@@ -121,6 +147,13 @@ class TaskReactionContainerState extends State<TaskReactionContainer>
         ),
       ),
     ).then((_) => _closeContainer());
+  }
+
+  bool get isOverdue {
+    final now = DateTime.now();
+    return widget.task.dueDate != null &&
+        widget.task.dueDate!.isBefore(now) &&
+        !widget.task.isCompleted;
   }
 
   @override
@@ -167,15 +200,18 @@ class TaskReactionContainerState extends State<TaskReactionContainer>
                         taskProvider.unpinTask(widget.task.id);
                       } else {
                         taskProvider.pinTask(widget.task.id);
+                        widget.onPinAnimationTrigger();
                       }
                       _closeContainer();
                     },
                   ),
                   _buildActionButton(
                     context,
-                    icon: widget.task.hasAlert
-                        ? CupertinoIcons.bell_fill
-                        : CupertinoIcons.bell,
+                    icon: isOverdue
+                        ? CupertinoIcons.bell_slash
+                        : (widget.task.hasAlert
+                            ? CupertinoIcons.bell_fill
+                            : CupertinoIcons.bell),
                     color: isDarkMode ? Colors.white : Colors.black,
                     opacity: 1.0,
                     onTap: _toggleAlert,
@@ -199,6 +235,7 @@ class TaskReactionContainerState extends State<TaskReactionContainer>
                     color: Colors.red,
                     opacity: 1.0,
                     onTap: () {
+                      _closeContainer();
                       showDialog(
                         context: context,
                         builder: (context) =>
