@@ -32,7 +32,7 @@ class AddTaskDialogState extends State<AddTaskDialog> {
   @override
   Widget build(BuildContext context) {
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return AlertDialog(
       title: const Text('Add Task'),
       content: SingleChildScrollView(
@@ -63,8 +63,12 @@ class AddTaskDialogState extends State<AddTaskDialog> {
               style: const TextStyle(color: CupertinoColors.label),
             ),
             const SizedBox(height: 16),
-            Text('Category',
-                style: CupertinoTheme.of(context).textTheme.textStyle),
+            Text(
+              'Category',
+              style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+            ),
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: SingleChildScrollView(
@@ -103,8 +107,12 @@ class AddTaskDialogState extends State<AddTaskDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Due Date and Time',
-                style: CupertinoTheme.of(context).textTheme.textStyle),
+            Text(
+              'Due Date and Time',
+              style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+            ),
             Row(
               children: [
                 Expanded(
@@ -134,8 +142,13 @@ class AddTaskDialogState extends State<AddTaskDialog> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Text('Set Alert',
-                    style: CupertinoTheme.of(context).textTheme.textStyle),
+                Text(
+                  'Set Alert',
+                  style:
+                      CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                ),
                 const SizedBox(width: 8),
                 CupertinoSwitch(
                   value: _hasAlert,
@@ -153,8 +166,12 @@ class AddTaskDialogState extends State<AddTaskDialog> {
             ),
             if (_hasAlert) ...[
               const SizedBox(height: 8),
-              Text('Alert Date and Time',
-                  style: CupertinoTheme.of(context).textTheme.textStyle),
+              Text(
+                'Alert Date and Time',
+                style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+              ),
               Row(
                 children: [
                   Expanded(
@@ -232,6 +249,11 @@ class AddTaskDialogState extends State<AddTaskDialog> {
   }
 
   void _showDueDateTimePicker() {
+    final now = DateTime.now();
+    setState(() {
+      _dueDateTime = now.add(const Duration(hours: 1));
+    });
+
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => Container(
@@ -244,7 +266,8 @@ class AddTaskDialogState extends State<AddTaskDialog> {
         child: SafeArea(
           top: false,
           child: CupertinoDatePicker(
-            initialDateTime: _dueDateTime ?? DateTime.now(),
+            initialDateTime: _dueDateTime,
+            minimumDate: now,
             mode: CupertinoDatePickerMode.dateAndTime,
             use24hFormat: false,
             onDateTimeChanged: (DateTime newDateTime) {
@@ -259,6 +282,13 @@ class AddTaskDialogState extends State<AddTaskDialog> {
   }
 
   void _showAlertDateTimePicker() {
+    final now = DateTime.now();
+    setState(() {
+      _alertDateTime = _dueDateTime != null
+          ? _dueDateTime!.subtract(const Duration(minutes: 30))
+          : now.add(const Duration(minutes: 30));
+    });
+
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => Container(
@@ -271,8 +301,9 @@ class AddTaskDialogState extends State<AddTaskDialog> {
         child: SafeArea(
           top: false,
           child: CupertinoDatePicker(
-            initialDateTime: _alertDateTime ?? DateTime.now(),
+            initialDateTime: _alertDateTime,
             maximumDate: _dueDateTime,
+            minimumDate: now,
             mode: CupertinoDatePickerMode.dateAndTime,
             use24hFormat: false,
             onDateTimeChanged: (DateTime newDateTime) {
