@@ -34,6 +34,9 @@ class MyApp extends StatelessWidget {
           title: 'Todo List App',
           theme: ThemeData(
             brightness: Brightness.light,
+            // appBarTheme: const AppBarTheme(color: Color(0xFFF6F0EB)),
+            // scaffoldBackgroundColor: const Color(0xFFF6F0EB),
+            // dialogBackgroundColor: const Color(0xFFF6F0EB),
             primarySwatch: Colors.blue,
             textTheme: GoogleFonts.poppinsTextTheme(
               Theme.of(context).textTheme,
@@ -41,6 +44,9 @@ class MyApp extends StatelessWidget {
           ),
           darkTheme: ThemeData(
             brightness: Brightness.dark,
+            // appBarTheme: const AppBarTheme(color: Color(0xFF3F3E45)),
+            // scaffoldBackgroundColor: const Color(0xFF3F3E45),
+            // dialogBackgroundColor: const Color(0xFF3F3E45),
             primarySwatch: Colors.blue,
             textTheme: GoogleFonts.poppinsTextTheme(
               Theme.of(context).textTheme.apply(bodyColor: Colors.white),
