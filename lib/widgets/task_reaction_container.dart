@@ -20,10 +20,10 @@ class TaskReactionContainer extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _TaskReactionContainerState createState() => _TaskReactionContainerState();
+  TaskReactionContainerState createState() => TaskReactionContainerState();
 }
 
-class _TaskReactionContainerState extends State<TaskReactionContainer>
+class TaskReactionContainerState extends State<TaskReactionContainer>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -104,8 +104,8 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
           top: false,
           child: CupertinoDatePicker(
             initialDateTime: widget.task.dueDate != null
-                ? widget.task.dueDate!.subtract(Duration(minutes: 30))
-                : DateTime.now().add(Duration(minutes: 30)),
+                ? widget.task.dueDate!.subtract(const Duration(minutes: 30))
+                : DateTime.now().add(const Duration(minutes: 30)),
             maximumDate: widget.task.dueDate,
             mode: CupertinoDatePickerMode.dateAndTime,
             use24hFormat: false,
@@ -228,7 +228,7 @@ class _TaskReactionContainerState extends State<TaskReactionContainer>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
         child: Icon(icon, color: color.withOpacity(opacity), size: 24),
       ),
     );

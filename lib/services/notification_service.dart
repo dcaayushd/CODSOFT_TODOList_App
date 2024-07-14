@@ -1,7 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:todolist_app/models/task.dart';
-import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+import '../models/task.dart';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -9,17 +10,17 @@ class NotificationService {
 
   Future<void> init() async {
     tz.initializeTimeZones();
-    final AndroidInitializationSettings initializationSettingsAndroid =
+    const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('app_icon');
 
-    final DarwinInitializationSettings initializationSettingsIOS =
+    const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
       requestSoundPermission: false,
       requestBadgePermission: false,
       requestAlertPermission: false,
     );
 
-    final InitializationSettings initializationSettings =
+    const InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
@@ -31,21 +32,27 @@ class NotificationService {
   Future<void> scheduleNotification(Task task) async {
     if (task.dueDate == null) return;
 
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'task_channel',
+      'Task Notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidNotificationDetails,
+      iOS: DarwinNotificationDetails(),
+    );
+
     await flutterLocalNotificationsPlugin.zonedSchedule(
       task.id.hashCode,
       'Task Due: ${task.title}',
       task.description,
       tz.TZDateTime.from(task.dueDate!, tz.local),
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'task_channel',
-          'Task Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidAllowWhileIdle: true,
+      notificationDetails,
+      // androidAllowWhileIdle: true,
+      androidScheduleMode: AndroidScheduleMode.exact, 
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );

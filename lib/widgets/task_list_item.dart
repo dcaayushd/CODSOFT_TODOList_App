@@ -16,16 +16,16 @@ class TaskListItem extends StatefulWidget {
   final Task task;
   final bool isFirstTask;
   static OverlayEntry? currentOverlay;
-  static GlobalKey<_TaskListItemState>? activeTaskKey;
+  static GlobalKey<TaskListItemState>? activeTaskKey;
 
   const TaskListItem({Key? key, required this.task, this.isFirstTask = false})
       : super(key: key);
 
   @override
-  _TaskListItemState createState() => _TaskListItemState();
+  TaskListItemState createState() => TaskListItemState();
 
   static void showReactionContainer(BuildContext context, Task task,
-      GlobalKey<_TaskListItemState> taskKey, bool isFirstTask) {
+      GlobalKey<TaskListItemState> taskKey, bool isFirstTask) {
     if (currentOverlay != null) {
       currentOverlay!.remove();
       currentOverlay = null;
@@ -78,7 +78,7 @@ class TaskListItem extends StatefulWidget {
   }
 }
 
-class _TaskListItemState extends State<TaskListItem> {
+class TaskListItemState extends State<TaskListItem> {
   bool _isBlinking = false;
   bool _isShifted = false;
   late Timer _timer;
@@ -103,7 +103,7 @@ class _TaskListItemState extends State<TaskListItem> {
   }
 
   void _startBlinking() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _isBlinking = !_isBlinking;
       });
@@ -137,7 +137,7 @@ class _TaskListItemState extends State<TaskListItem> {
         ),
       );
     } else {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
   }
 
@@ -150,7 +150,7 @@ class _TaskListItemState extends State<TaskListItem> {
       onLongPressStart: (details) {
         if (!widget.task.isCompleted) {
           TaskListItem.showReactionContainer(context, widget.task,
-              GlobalKey<_TaskListItemState>(), widget.isFirstTask);
+              GlobalKey<TaskListItemState>(), widget.isFirstTask);
         }
       },
       onTap: () {
@@ -162,13 +162,13 @@ class _TaskListItemState extends State<TaskListItem> {
         }
       },
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 200),
         margin: EdgeInsets.only(top: _isShifted ? 50 : 0),
         child: Stack(
           children: [
             Card(
               elevation: 2,
-              margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               color:
                   isOverdue && _isBlinking ? Colors.red.withOpacity(0.1) : null,
               child: ListTile(
@@ -202,7 +202,7 @@ class _TaskListItemState extends State<TaskListItem> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (isOverdue)
-                      Text(
+                      const Text(
                         'Task not completed on time!',
                         style: TextStyle(
                             color: Colors.red, fontWeight: FontWeight.bold),
@@ -213,7 +213,7 @@ class _TaskListItemState extends State<TaskListItem> {
                         color: isOverdue ? Colors.red : null,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(
@@ -221,7 +221,7 @@ class _TaskListItemState extends State<TaskListItem> {
                           size: 16,
                           color: isOverdue ? Colors.red : null,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             widget.task.category.isEmpty
@@ -233,13 +233,13 @@ class _TaskListItemState extends State<TaskListItem> {
                             ),
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Icon(
                           CupertinoIcons.time,
                           size: 16,
                           color: isOverdue ? Colors.red : null,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             widget.task.dueDate != null

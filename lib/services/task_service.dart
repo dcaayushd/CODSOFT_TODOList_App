@@ -1,4 +1,4 @@
-import 'package:todolist_app/models/task.dart';
+import '../models/task.dart';
 
 class TaskService {
   List<Task> _tasks = [];

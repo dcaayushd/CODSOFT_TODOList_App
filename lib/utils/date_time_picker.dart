@@ -6,7 +6,7 @@ class DateTimePicker extends StatefulWidget {
   final CupertinoDatePickerMode mode;
   final DateTime? minimumDate;
 
-  DateTimePicker({
+  const DateTimePicker({
     Key? key,
     this.initialDateTime,
     this.onDateTimeChanged,
@@ -15,10 +15,10 @@ class DateTimePicker extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _DateTimePickerState createState() => _DateTimePickerState();
+  DateTimePickerState createState() => DateTimePickerState();
 }
 
-class _DateTimePickerState extends State<DateTimePicker> {
+class DateTimePickerState extends State<DateTimePicker> {
   late DateTime _selectedDateTime;
 
   @override

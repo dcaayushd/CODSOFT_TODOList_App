@@ -24,10 +24,9 @@ class Task {
     this.isOverdue = false,
     DateTime? createdAt,
     this.hasAlert = false,
-    this.alertDateTime,  
-  }) :
-    id = id ?? Uuid().v4(),
-    createdAt = createdAt ?? DateTime.now();
+    this.alertDateTime,
+  })  : id = id ?? const Uuid().v4(),
+        createdAt = createdAt ?? DateTime.now();
 
   Task copyWith({
     String? title,
@@ -38,10 +37,11 @@ class Task {
     bool? isPinned,
     bool? isOverdue,
     bool? hasAlert,
-    DateTime? alertDateTime,  
+    DateTime? alertDateTime,
   }) {
     return Task(
-      id: this.id,
+      // id: this.id,
+      id: id,
       title: title ?? this.title,
       description: description ?? this.description,
       category: category ?? this.category,
@@ -49,9 +49,10 @@ class Task {
       isCompleted: isCompleted ?? this.isCompleted,
       isPinned: isPinned ?? this.isPinned,
       isOverdue: isOverdue ?? this.isOverdue,
-      createdAt: this.createdAt,
+      // createdAt: this.createdAt,
+      createdAt: createdAt,
       hasAlert: hasAlert ?? this.hasAlert,
-      alertDateTime: alertDateTime ?? this.alertDateTime,  
+      alertDateTime: alertDateTime ?? this.alertDateTime,
     );
   }
 
@@ -67,23 +68,29 @@ class Task {
       'isOverdue': isOverdue,
       'createdAt': createdAt.toIso8601String(),
       'hasAlert': hasAlert,
-      'alertDateTime': alertDateTime?.toIso8601String(),  
+      'alertDateTime': alertDateTime?.toIso8601String(),
     };
   }
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
-      id: json['id'] as String? ?? Uuid().v4(),
+      id: json['id'] as String? ?? const Uuid().v4(),
       title: json['title'] as String? ?? 'Untitled Task',
       description: json['description'] as String? ?? '',
       category: json['category'] as String? ?? 'Other',
-      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate'] as String) : null,
+      dueDate: json['dueDate'] != null
+          ? DateTime.parse(json['dueDate'] as String)
+          : null,
       isCompleted: json['isCompleted'] as bool? ?? false,
       isPinned: json['isPinned'] as bool? ?? false,
       isOverdue: json['isOverdue'] as bool? ?? false,
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
       hasAlert: json['hasAlert'] as bool? ?? false,
-      alertDateTime: json['alertDateTime'] != null ? DateTime.parse(json['alertDateTime'] as String) : null,  
+      alertDateTime: json['alertDateTime'] != null
+          ? DateTime.parse(json['alertDateTime'] as String)
+          : null,
     );
   }
 }

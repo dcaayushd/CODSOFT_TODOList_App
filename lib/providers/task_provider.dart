@@ -1,11 +1,13 @@
-import 'package:flutter/foundation.dart';
-import 'package:todolist_app/models/task.dart';
-import 'package:todolist_app/services/task_service.dart';
-import 'package:todolist_app/services/notification_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:intl/intl.dart';
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/task.dart';
+import '../services/notification_service.dart';
+import '../services/task_service.dart';
 
 class TaskProvider with ChangeNotifier {
   final TaskService _taskService = TaskService();
@@ -44,7 +46,7 @@ class TaskProvider with ChangeNotifier {
   }
 
   void startPeriodicOverdueCheck() {
-    _overdueCheckTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+    _overdueCheckTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       checkAndUpdateOverdueTasks();
     });
   }

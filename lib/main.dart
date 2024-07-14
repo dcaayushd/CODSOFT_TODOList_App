@@ -17,12 +17,14 @@ void main() async {
         ChangeNotifierProvider.value(value: taskProvider),
         ChangeNotifierProvider.value(value: themeProvider),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
@@ -46,7 +48,7 @@ class MyApp extends StatelessWidget {
           ),
           themeMode:
               themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: TaskListScreen(),
+          home: const TaskListScreen(),
         );
       },
     );

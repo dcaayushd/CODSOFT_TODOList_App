@@ -1,20 +1,22 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:todolist_app/providers/task_provider.dart';
-import 'package:todolist_app/providers/theme_provider.dart';
-import 'package:todolist_app/widgets/task_list_item.dart';
-import 'package:todolist_app/widgets/add_task_dialog.dart';
-import 'package:todolist_app/widgets/delete_task_dialog.dart';
 
 import '../models/task.dart';
+import '../providers/task_provider.dart';
+import '../providers/theme_provider.dart';
+import '../widgets/add_task_dialog.dart';
+import '../widgets/delete_task_dialog.dart';
+import '../widgets/task_list_item.dart';
 
 class TaskListScreen extends StatefulWidget {
+  const TaskListScreen({super.key});
+
   @override
-  _TaskListScreenState createState() => _TaskListScreenState();
+  TaskListScreenState createState() => TaskListScreenState();
 }
 
-class _TaskListScreenState extends State<TaskListScreen> {
+class TaskListScreenState extends State<TaskListScreen> {
   String _searchQuery = '';
   DateTime? _lastAddedTaskTime;
   late PageController _pageController;
@@ -55,7 +57,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
         return Scaffold(
           appBar: AppBar(
             centerTitle: true,
-            title: Text('Todo List'),
+            title: const Text('Todo List'),
             elevation: 0,
             actions: [
               Consumer<ThemeProvider>(
@@ -81,7 +83,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Search tasks',
-                    prefixIcon: Icon(CupertinoIcons.search),
+                    prefixIcon: const Icon(CupertinoIcons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -112,7 +114,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   );
                 },
               ),
-              Container(
+              SizedBox(
                 height: 2,
                 child: ValueListenableBuilder<int>(
                   valueListenable: _currentPageNotifier,
@@ -121,7 +123,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       children: [
                         Expanded(
                           child: AnimatedContainer(
-                            duration: Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 300),
                             color: currentPage == 0
                                 ? Theme.of(context).colorScheme.secondary
                                 : Colors.transparent,
@@ -129,7 +131,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                         ),
                         Expanded(
                           child: AnimatedContainer(
-                            duration: Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 300),
                             color: currentPage == 1
                                 ? Theme.of(context).colorScheme.secondary
                                 : Colors.transparent,
@@ -137,7 +139,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                         ),
                         Expanded(
                           child: AnimatedContainer(
-                            duration: Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 300),
                             color: currentPage == 2
                                 ? Theme.of(context).colorScheme.secondary
                                 : Colors.transparent,
@@ -168,22 +170,22 @@ class _TaskListScreenState extends State<TaskListScreen> {
             onPressed: () async {
               final result = await showDialog(
                 context: context,
-                builder: (context) => AddTaskDialog(),
+                builder: (context) => const AddTaskDialog(),
               );
               if (result == true) {
                 setState(() {
                   _lastAddedTaskTime = DateTime.now();
                 });
                 // Reset the highlight after 1 minute
-                Future.delayed(Duration(minutes: 1), () {
+                Future.delayed(const Duration(minutes: 1), () {
                   setState(() {
                     _lastAddedTaskTime = null;
                   });
                 });
               }
             },
-            icon: Icon(CupertinoIcons.add),
-            label: Text('Add Task'),
+            icon: const Icon(CupertinoIcons.add),
+            label: const Text('Add Task'),
           ),
         );
       },
@@ -196,7 +198,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       child: TextButton(
         onPressed: () {
           _pageController.animateToPage(page,
-              duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+              duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
         },
         child: FittedBox(
           fit: BoxFit.scaleDown,
@@ -257,8 +259,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.centerRight,
-            padding: EdgeInsets.only(right: 20),
-            child: Icon(CupertinoIcons.delete, color: Colors.white),
+            padding: const EdgeInsets.only(right: 20),
+            child: const Icon(CupertinoIcons.delete, color: Colors.white),
           ),
           direction: DismissDirection.endToStart,
           confirmDismiss: (direction) async {
@@ -273,7 +275,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 .deleteTask(task.id);
           },
           child: AnimatedContainer(
-            duration: Duration(seconds: 1),
+            duration: const Duration(seconds: 1),
             curve: Curves.easeInOut,
             color: isNewlyAdded ? Colors.yellow.withOpacity(0.3) : null,
             child: TaskListItem(task: task, isFirstTask: index == 0),

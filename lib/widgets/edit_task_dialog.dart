@@ -1,23 +1,23 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:todolist_app/models/task.dart';
-import 'package:todolist_app/providers/task_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
-import '../utils/utils.dart';
+import '../models/task.dart';
+import '../providers/task_provider.dart';
 import '../utils/date_time_picker.dart';
+import '../utils/utils.dart';
 
 class EditTaskDialog extends StatefulWidget {
   final Task task;
 
-  EditTaskDialog({Key? key, required this.task}) : super(key: key);
+  const EditTaskDialog({Key? key, required this.task}) : super(key: key);
 
   @override
-  _EditTaskDialogState createState() => _EditTaskDialogState();
+  EditTaskDialogState createState() => EditTaskDialogState();
 }
 
-class _EditTaskDialogState extends State<EditTaskDialog> {
+class EditTaskDialogState extends State<EditTaskDialog> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late String _selectedCategory;
@@ -50,7 +50,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
     return AlertDialog(
-      title: Text('Edit Task'),
+      title: const Text('Edit Task'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -59,26 +59,26 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
             CupertinoTextField(
               controller: _titleController,
               placeholder: 'Title',
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemGrey6,
                 borderRadius: BorderRadius.circular(8),
               ),
-              style: TextStyle(color: CupertinoColors.label),
+              style: const TextStyle(color: CupertinoColors.label),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             CupertinoTextField(
               controller: _descriptionController,
               placeholder: 'Description',
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               maxLines: 3,
               decoration: BoxDecoration(
                 color: CupertinoColors.systemGrey6,
                 borderRadius: BorderRadius.circular(8),
               ),
-              style: TextStyle(color: CupertinoColors.label),
+              style: const TextStyle(color: CupertinoColors.label),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text('Category',
                 style: CupertinoTheme.of(context).textTheme.textStyle),
             Padding(
@@ -95,9 +95,9 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                         });
                       },
                       child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        margin: EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           color: _selectedCategory == category
                               ? Utils.getCategoryColor(category)
@@ -118,7 +118,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text('Due Date and Time',
                 style: CupertinoTheme.of(context).textTheme.textStyle),
             Row(
@@ -143,20 +143,20 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Text('Set Alert',
                     style: CupertinoTheme.of(context).textTheme.textStyle),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 CupertinoSwitch(
                   value: _hasAlert,
                   onChanged: (value) {
                     setState(() {
                       _hasAlert = value;
                       if (_hasAlert && _alertDateTime == null) {
-                        _alertDateTime =
-                            _selectedDate?.subtract(Duration(minutes: 30));
+                        _alertDateTime = _selectedDate
+                            ?.subtract(const Duration(minutes: 30));
                       }
                     });
                   },
@@ -164,7 +164,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               ],
             ),
             if (_hasAlert) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text('Alert Date and Time',
                   style: CupertinoTheme.of(context).textTheme.textStyle),
               Row(
@@ -195,14 +195,14 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       ),
       actions: [
         TextButton(
-          child: Text('Cancel'),
           style: TextButton.styleFrom(
             foregroundColor: Colors.red,
           ),
           onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
         ),
         TextButton(
-          child: Text('Save'),
+          child: const Text('Save'),
           onPressed: () async {
             if (_titleController.text.isNotEmpty) {
               final dueDate = _selectedDate != null && _selectedTime != null
@@ -220,12 +220,15 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text('Invalid Alert Time'),
-                      content: Text('Alert time cannot be after the due date.'),
+                      title: const Text('Invalid Alert Time'),
+                      content: const Text(
+                          'Alert time cannot be after the due date.'),
                       actions: [
                         TextButton(
-                          child: Text('OK'),
-                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
                         ),
                       ],
                     ),
