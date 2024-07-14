@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import '../models/task.dart';
 import '../providers/task_provider.dart';
-import '../utils/date_time_picker.dart';
 import '../utils/utils.dart';
 
 class AddTaskDialog extends StatefulWidget {
@@ -19,8 +18,7 @@ class AddTaskDialogState extends State<AddTaskDialog> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   String _selectedCategory = '';
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
+  DateTime? _dueDateTime;
   bool _hasAlert = false;
   DateTime? _alertDateTime;
 
@@ -112,22 +110,22 @@ class AddTaskDialogState extends State<AddTaskDialog> {
                 Expanded(
                   child: CupertinoButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () => _showDatePicker(context),
+                    onPressed: _showDueDateTimePicker,
                     child: Text(
-                      _selectedDate == null
+                      _dueDateTime == null
                           ? 'Select Date'
-                          : DateFormat('MMM d, y').format(_selectedDate!),
+                          : DateFormat('MMM d, y').format(_dueDateTime!),
                     ),
                   ),
                 ),
                 Expanded(
                   child: CupertinoButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () => _showTimePicker(context),
+                    onPressed: _showDueDateTimePicker,
                     child: Text(
-                      _selectedTime == null
+                      _dueDateTime == null
                           ? 'Select Time'
-                          : _selectedTime!.format(context),
+                          : DateFormat('h:mm a').format(_dueDateTime!),
                     ),
                   ),
                 ),
@@ -145,8 +143,8 @@ class AddTaskDialogState extends State<AddTaskDialog> {
                     setState(() {
                       _hasAlert = value;
                       if (_hasAlert && _alertDateTime == null) {
-                        _alertDateTime = _selectedDate
-                            ?.subtract(const Duration(minutes: 30));
+                        _alertDateTime =
+                            _dueDateTime?.subtract(const Duration(minutes: 30));
                       }
                     });
                   },
@@ -162,7 +160,7 @@ class AddTaskDialogState extends State<AddTaskDialog> {
                   Expanded(
                     child: CupertinoButton(
                       padding: EdgeInsets.zero,
-                      onPressed: () => _showAlertDatePicker(context),
+                      onPressed: _showAlertDateTimePicker,
                       child: Text(_alertDateTime == null
                           ? 'Select Date'
                           : DateFormat('MMM d, y').format(_alertDateTime!)),
@@ -171,7 +169,7 @@ class AddTaskDialogState extends State<AddTaskDialog> {
                   Expanded(
                     child: CupertinoButton(
                       padding: EdgeInsets.zero,
-                      onPressed: () => _showAlertTimePicker(context),
+                      onPressed: _showAlertDateTimePicker,
                       child: Text(_alertDateTime == null
                           ? 'Select Time'
                           : DateFormat('h:mm a').format(_alertDateTime!)),
@@ -195,18 +193,8 @@ class AddTaskDialogState extends State<AddTaskDialog> {
           child: const Text('Add'),
           onPressed: () async {
             if (_titleController.text.isNotEmpty) {
-              final dueDate = _selectedDate != null && _selectedTime != null
-                  ? DateTime(
-                      _selectedDate!.year,
-                      _selectedDate!.month,
-                      _selectedDate!.day,
-                      _selectedTime!.hour,
-                      _selectedTime!.minute,
-                    )
-                  : null;
-
-              if (_hasAlert && _alertDateTime != null && dueDate != null) {
-                if (_alertDateTime!.isAfter(dueDate)) {
+              if (_hasAlert && _alertDateTime != null && _dueDateTime != null) {
+                if (_alertDateTime!.isAfter(_dueDateTime!)) {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
@@ -229,7 +217,7 @@ class AddTaskDialogState extends State<AddTaskDialog> {
                 title: _titleController.text,
                 description: _descriptionController.text,
                 category: _selectedCategory,
-                dueDate: dueDate,
+                dueDate: _dueDateTime,
                 hasAlert: _hasAlert,
                 alertDateTime: _hasAlert ? _alertDateTime : null,
               );
@@ -243,126 +231,59 @@ class AddTaskDialogState extends State<AddTaskDialog> {
     );
   }
 
-  void _showDatePicker(BuildContext context) {
+  void _showDueDateTimePicker() {
     showCupertinoModalPopup(
       context: context,
-      builder: (_) => Container(
-        height: 200,
-        color: CupertinoTheme.of(context).brightness == Brightness.light
-            ? CupertinoColors.systemBackground
-            : Colors.black,
-        child: DateTimePicker(
-          initialDateTime: _selectedDate ?? DateTime.now(),
-          mode: CupertinoDatePickerMode.date,
-          onDateTimeChanged: (val) {
-            setState(() {
-              _selectedDate = val;
-            });
-          },
+      builder: (BuildContext context) => Container(
+        height: 216,
+        padding: const EdgeInsets.only(top: 6.0),
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: SafeArea(
+          top: false,
+          child: CupertinoDatePicker(
+            initialDateTime: _dueDateTime ?? DateTime.now(),
+            mode: CupertinoDatePickerMode.dateAndTime,
+            use24hFormat: false,
+            onDateTimeChanged: (DateTime newDateTime) {
+              setState(() {
+                _dueDateTime = newDateTime;
+              });
+            },
+          ),
         ),
       ),
-    ).then((_) {
-      if (_selectedDate == null) {
-        setState(() {
-          _selectedDate = DateTime.now();
-        });
-      }
-    });
+    );
   }
 
-  void _showTimePicker(BuildContext context) {
+  void _showAlertDateTimePicker() {
     showCupertinoModalPopup(
       context: context,
-      builder: (_) => Container(
-        height: 200,
-        color: CupertinoTheme.of(context).brightness == Brightness.light
-            ? CupertinoColors.systemBackground
-            : Colors.black,
-        child: DateTimePicker(
-          initialDateTime: _selectedTime != null
-              ? DateTime(2023, 1, 1, _selectedTime!.hour, _selectedTime!.minute)
-              : DateTime.now(),
-          mode: CupertinoDatePickerMode.time,
-          onDateTimeChanged: (val) {
-            setState(() {
-              _selectedTime = TimeOfDay.fromDateTime(val);
-            });
-          },
+      builder: (BuildContext context) => Container(
+        height: 216,
+        padding: const EdgeInsets.only(top: 6.0),
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: SafeArea(
+          top: false,
+          child: CupertinoDatePicker(
+            initialDateTime: _alertDateTime ?? DateTime.now(),
+            maximumDate: _dueDateTime,
+            mode: CupertinoDatePickerMode.dateAndTime,
+            use24hFormat: false,
+            onDateTimeChanged: (DateTime newDateTime) {
+              setState(() {
+                _alertDateTime = newDateTime;
+              });
+            },
+          ),
         ),
       ),
-    ).then((_) {
-      if (_selectedTime == null) {
-        setState(() {
-          _selectedTime = TimeOfDay.now();
-        });
-      }
-    });
-  }
-
-  void _showAlertDatePicker(BuildContext context) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (_) => Container(
-        height: 200,
-        color: CupertinoTheme.of(context).brightness == Brightness.light
-            ? CupertinoColors.systemBackground
-            : CupertinoColors.black,
-        child: DateTimePicker(
-          initialDateTime: _alertDateTime ?? DateTime.now(),
-          mode: CupertinoDatePickerMode.date,
-          onDateTimeChanged: (val) {
-            setState(() {
-              _alertDateTime = DateTime(
-                val.year,
-                val.month,
-                val.day,
-                _alertDateTime?.hour ?? 0,
-                _alertDateTime?.minute ?? 0,
-              );
-            });
-          },
-        ),
-      ),
-    ).then((_) {
-      if (_alertDateTime == null) {
-        setState(() {
-          _alertDateTime = DateTime.now();
-        });
-      }
-    });
-  }
-
-  void _showAlertTimePicker(BuildContext context) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (_) => Container(
-        height: 200,
-        color: CupertinoTheme.of(context).brightness == Brightness.light
-            ? CupertinoColors.systemBackground
-            : CupertinoColors.black,
-        child: DateTimePicker(
-          initialDateTime: _alertDateTime ?? DateTime.now(),
-          mode: CupertinoDatePickerMode.time,
-          onDateTimeChanged: (val) {
-            setState(() {
-              _alertDateTime = DateTime(
-                _alertDateTime?.year ?? DateTime.now().year,
-                _alertDateTime?.month ?? DateTime.now().month,
-                _alertDateTime?.day ?? DateTime.now().day,
-                val.hour,
-                val.minute,
-              );
-            });
-          },
-        ),
-      ),
-    ).then((_) {
-      if (_alertDateTime == null) {
-        setState(() {
-          _alertDateTime = DateTime.now();
-        });
-      }
-    });
+    );
   }
 
   @override
@@ -372,4 +293,3 @@ class AddTaskDialogState extends State<AddTaskDialog> {
     super.dispose();
   }
 }
-
