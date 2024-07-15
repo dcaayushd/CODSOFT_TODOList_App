@@ -286,7 +286,9 @@ class TaskListScreenState extends State<TaskListScreen> {
     }
 
     return ListView.builder(
-      padding: EdgeInsets.zero,
+      // padding: EdgeInsets.zero,
+      // padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final task = tasks[index];
@@ -298,7 +300,7 @@ class TaskListScreenState extends State<TaskListScreen> {
           background: Container(
             decoration: BoxDecoration(
               color: Colors.red,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
             ),
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
@@ -320,7 +322,14 @@ class TaskListScreenState extends State<TaskListScreen> {
             duration: const Duration(seconds: 1),
             curve: Curves.easeInOut,
             color: isNewlyAdded ? Colors.yellow.withOpacity(0.3) : null,
-            child: TaskListItem(task: task, isFirstTask: index == 0),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 2),
+              decoration: BoxDecoration(
+                color: isNewlyAdded ? Colors.yellow.withOpacity(0.3) : null,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: TaskListItem(task: task, isFirstTask: index == 0),
+            ),
           ),
         );
       },

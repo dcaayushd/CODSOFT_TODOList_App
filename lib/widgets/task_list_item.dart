@@ -62,16 +62,15 @@ class TaskListItem extends StatefulWidget {
             child: Material(
               color: Colors.transparent,
               child: TaskReactionContainer(
-                task: task,
-                onClose: () {
-                  currentOverlay?.remove();
-                  currentOverlay = null;
-                  taskKey.currentState?.setShifted(false);
-                },
-                onPinAnimationTrigger: () {
-                  taskKey.currentState?.animatePinning();
-                },
-              ),
+                  task: task,
+                  onClose: () {
+                    currentOverlay?.remove();
+                    currentOverlay = null;
+                    taskKey.currentState?.setShifted(false);
+                  },
+                  onPinAnimationTrigger: () {
+                    taskKey.currentState?.animatePinning();
+                  }),
             ),
           ),
         ],
@@ -140,6 +139,12 @@ class TaskListItemState extends State<TaskListItem>
     });
   }
 
+  void animatePinning() {
+    _pinAnimationController.forward(from: 0).then((_) {
+      _pinAnimationController.reverse();
+    });
+  }
+
   Widget _buildAlertIcon() {
     final categoryColor = Utils.getCategoryColor(widget.task.category);
     if (widget.task.hasAlert && !widget.task.isCompleted) {
@@ -151,7 +156,11 @@ class TaskListItemState extends State<TaskListItem>
         child: Icon(
           CupertinoIcons.bell_fill,
           size: 20,
-          color: categoryColor,
+          color: _isBlinking
+              ? Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black
+              : categoryColor,
         ),
       );
     } else {
@@ -159,17 +168,16 @@ class TaskListItemState extends State<TaskListItem>
     }
   }
 
-  void animatePinning() {
-    _pinAnimationController.forward(from: 0).then((_) {
-      _pinAnimationController.reverse();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final isOverdue = this.isOverdue;
     final categoryColor = Utils.getCategoryColor(widget.task.category);
+    final isDarkMode = brightness == Brightness.dark;
+
+    final backgroundColor = isDarkMode
+        ? categoryColor.withOpacity(0.3)
+        : categoryColor.withOpacity(0.1);
 
     return GestureDetector(
       onLongPressStart: (details) {
@@ -188,19 +196,24 @@ class TaskListItemState extends State<TaskListItem>
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: EdgeInsets.only(top: _isShifted ? 50 : 0),
-        child: Stack(
-          children: [
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              color: isOverdue && _isBlinking
-                  ? categoryColor.withOpacity(0.1)
-                  : null,
-              child: Column(
+        margin: EdgeInsets.only(
+          top: _isShifted ? 50 : 0,
+          bottom: 8,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: categoryColor.withOpacity(0.5),
+              width: 1,
+            ),
+            color: isOverdue && _isBlinking
+                ? categoryColor.withOpacity(0.2)
+                : backgroundColor,
+          ),
+          child: Stack(
+            children: [
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ListTile(
@@ -208,42 +221,46 @@ class TaskListItemState extends State<TaskListItem>
                       horizontal: 16,
                       vertical: isOverdue ? 0 : 8,
                     ),
-                    leading: Checkbox(
-                      value: widget.task.isCompleted,
-                      onChanged: widget.task.isCompleted || isOverdue
-                          ? null
-                          : (bool? value) {
-                              Provider.of<TaskProvider>(context, listen: false)
-                                  .toggleTaskCompletion(widget.task.id);
-                            },
-                      activeColor: categoryColor,
-                      checkColor: Colors.white,
-                    ),
+                    leading: isOverdue
+                        ? _overdueCheckBox()
+                        : Checkbox(
+                            value: widget.task.isCompleted,
+                            onChanged: widget.task.isCompleted || isOverdue
+                                ? null
+                                : (bool? value) {
+                                    Provider.of<TaskProvider>(context,
+                                            listen: false)
+                                        .toggleTaskCompletion(widget.task.id);
+                                  },
+                            activeColor: categoryColor,
+                            checkColor: Colors.white,
+                          ),
                     title: isOverdue
                         ? Text(
-                            'Task not completed !',
+                            'Task not completed in Time!',
                             style: GoogleFonts.robotoSlab(
                               textStyle: TextStyle(
                                 color: Colors.red[500],
                                 fontWeight: FontWeight.bold,
-                                fontSize: 20,
+                                fontSize: 16,
                               ),
                             ),
                           )
                         : Text(
                             widget.task.title,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.roboto(
                               textStyle: TextStyle(
                                 decoration: widget.task.isCompleted
                                     ? TextDecoration.lineThrough
                                     : TextDecoration.none,
                                 decorationColor: widget.task.isCompleted
-                                    ? brightness == Brightness.light
-                                        ? categoryColor.withOpacity(1)
-                                        : categoryColor.withOpacity(1)
+                                    ? categoryColor.withOpacity(1)
                                     : null,
                                 decorationThickness: 3,
-                                color: categoryColor.withOpacity(1),
+                                // color: textColor,
+                                color: categoryColor,
+
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -257,37 +274,38 @@ class TaskListItemState extends State<TaskListItem>
                                 children: [
                                   Text(
                                     widget.task.title,
+                                    overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.roboto(
                                       textStyle: TextStyle(
                                         decoration: widget.task.isCompleted
                                             ? TextDecoration.lineThrough
                                             : TextDecoration.none,
                                         decorationColor: widget.task.isCompleted
-                                            ? brightness == Brightness.light
-                                                ? categoryColor.withOpacity(1)
-                                                : categoryColor.withOpacity(1)
+                                            ? categoryColor.withOpacity(1)
                                             : null,
                                         decorationThickness: 3,
+                                        // color: textColor,
                                         color: _isBlinking
-                                            ? Theme.of(context).brightness ==
-                                                    Brightness.dark
+                                            ? isDarkMode
                                                 ? Colors.white
                                                 : Colors.black
-                                            : categoryColor.withOpacity(1),
+                                            : categoryColor,
+
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
                                   Text(
                                     widget.task.description,
+                                    overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.roboto(
                                       textStyle: TextStyle(
+                                        // color: textColor,
                                         color: _isBlinking
-                                            ? Theme.of(context).brightness ==
-                                                    Brightness.dark
+                                            ? isDarkMode
                                                 ? Colors.white
                                                 : Colors.black
-                                            : categoryColor.withOpacity(1),
+                                            : categoryColor,
                                       ),
                                     ),
                                   ),
@@ -295,9 +313,14 @@ class TaskListItemState extends State<TaskListItem>
                               )
                             : Text(
                                 widget.task.description,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.roboto(
                                   textStyle: TextStyle(
-                                    color: categoryColor.withOpacity(1),
+                                    color: _isBlinking
+                                        ? isDarkMode
+                                            ? Colors.white
+                                            : Colors.black
+                                        : categoryColor,
                                   ),
                                 ),
                               ),
@@ -307,12 +330,12 @@ class TaskListItemState extends State<TaskListItem>
                             Icon(
                               CupertinoIcons.tag,
                               size: 16,
+                              // color: textColor,
                               color: _isBlinking
-                                  ? Theme.of(context).brightness ==
-                                          Brightness.dark
+                                  ? isDarkMode
                                       ? Colors.white
                                       : Colors.black
-                                  : categoryColor.withOpacity(1),
+                                  : categoryColor,
                             ),
                             const SizedBox(width: 4),
                             Expanded(
@@ -323,12 +346,12 @@ class TaskListItemState extends State<TaskListItem>
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.roboto(
                                   textStyle: TextStyle(
+                                    // color: textColor,
                                     color: _isBlinking
-                                        ? Theme.of(context).brightness ==
-                                                Brightness.dark
+                                        ? isDarkMode
                                             ? Colors.white
                                             : Colors.black
-                                        : categoryColor.withOpacity(1),
+                                        : categoryColor,
                                   ),
                                 ),
                               ),
@@ -337,12 +360,12 @@ class TaskListItemState extends State<TaskListItem>
                             Icon(
                               CupertinoIcons.time,
                               size: 16,
+                              // color: textColor,
                               color: _isBlinking
-                                  ? Theme.of(context).brightness ==
-                                          Brightness.dark
+                                  ? isDarkMode
                                       ? Colors.white
                                       : Colors.black
-                                  : categoryColor.withOpacity(1),
+                                  : categoryColor,
                             ),
                             const SizedBox(width: 4),
                             Expanded(
@@ -354,12 +377,12 @@ class TaskListItemState extends State<TaskListItem>
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.roboto(
                                   textStyle: TextStyle(
+                                    // color: textColor,
                                     color: _isBlinking
-                                        ? Theme.of(context).brightness ==
-                                                Brightness.dark
+                                        ? isDarkMode
                                             ? Colors.white
                                             : Colors.black
-                                        : categoryColor.withOpacity(1),
+                                        : categoryColor,
                                   ),
                                 ),
                               ),
@@ -374,9 +397,9 @@ class TaskListItemState extends State<TaskListItem>
                             icon: Icon(
                               CupertinoIcons.pencil,
                               size: 35,
+                              // color: textColor,
                               color: _isBlinking
-                                  ? Theme.of(context).brightness ==
-                                          Brightness.dark
+                                  ? isDarkMode
                                       ? Colors.white
                                       : Colors.black
                                   : categoryColor,
@@ -389,51 +412,78 @@ class TaskListItemState extends State<TaskListItem>
                               );
                             },
                           ),
-                    tileColor: isOverdue
-                        ? categoryColor.withOpacity(0.1)
-                        : categoryColor.withOpacity(0.1),
                   ),
                 ],
               ),
-            ),
-            if (widget.task.isPinned && !widget.task.isCompleted)
-              Positioned(
-                top: 8,
-                left: 8,
-                child: GestureDetector(
-                  onTap: () {
-                    Provider.of<TaskProvider>(context, listen: false)
-                        .unpinTask(widget.task.id);
-                  },
-                  child: AnimatedBuilder(
-                    animation: _pinAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: 1.0 + (_pinAnimation.value * 0.3),
-                        child: Opacity(
-                          opacity: 1.0 - (_pinAnimation.value * 0.3),
-                          child: Icon(
-                            CupertinoIcons.pin_fill,
-                            color: _isBlinking
-                                ? Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black
-                                : categoryColor,
-                          ),
-                        ),
-                      );
+              if (widget.task.isPinned && !widget.task.isCompleted)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: GestureDetector(
+                    onTap: () {
+                      Provider.of<TaskProvider>(context, listen: false)
+                          .unpinTask(widget.task.id);
                     },
+                    child: AnimatedBuilder(
+                      animation: _pinAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: 1.0 + (_pinAnimation.value * 0.3),
+                          child: Opacity(
+                            opacity: 1.0 - (_pinAnimation.value * 0.3),
+                            child: Icon(
+                              CupertinoIcons.pin_fill,
+                              // color: textColor,
+                              color: _isBlinking
+                                  ? isDarkMode
+                                      ? Colors.white
+                                      : Colors.black
+                                  : categoryColor,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-            if (!widget.task.isCompleted)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: _buildAlertIcon(),
-              ),
-          ],
+              if (!widget.task.isCompleted)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildAlertIcon(),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _overdueCheckBox() {
+    return Container(
+      width: 24.0,
+      height: 24.0,
+      decoration: BoxDecoration(
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.circular(4.0),
+        border: Border.all(
+          color: _isBlinking
+              ? Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black
+              : Colors.red,
+          width: 2.0,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.close,
+          color: _isBlinking
+              ? Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black
+              : Colors.red,
+          size: 20.0,
         ),
       ),
     );
