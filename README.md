@@ -46,9 +46,14 @@ A feature-rich and visually appealing Todo List application built with Flutter.
 ## Dependencies
 
 - flutter
-- provider
+- flutter_local_notifications
+- flutter_slidable:
 - google_fonts
 - intl
+- provider
+- shared_preferences
+- timezone
+- uuid
 
 ## Contributing
 
