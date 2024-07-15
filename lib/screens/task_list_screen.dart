@@ -55,114 +55,11 @@ class TaskListScreenState extends State<TaskListScreen> {
             : taskProvider.searchTasks(_searchQuery);
 
         return Scaffold(
-          appBar: AppBar(
-            centerTitle: true,
-            title: const Text('Todo List'),
-            elevation: 0,
-            actions: [
-              Consumer<ThemeProvider>(
-                builder: (context, themeProvider, child) {
-                  return IconButton(
-                    icon: Icon(
-                      themeProvider.isDarkMode
-                          ? CupertinoIcons.sun_max
-                          : CupertinoIcons.moon,
-                    ),
-                    onPressed: () {
-                      themeProvider.toggleTheme();
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
           body: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search tasks',
-                    prefixIcon: const Icon(CupertinoIcons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                ),
-              ),
-              ValueListenableBuilder<int>(
-                valueListenable: _currentPageNotifier,
-                builder: (context, currentPage, child) {
-                  return Row(
-                    children: [
-                      _buildCategoryButton(context, 'Pending',
-                          categorizedTasks['pending']!.length, 0, currentPage),
-                      _buildCategoryButton(
-                          context,
-                          'Completed',
-                          categorizedTasks['completed']!.length,
-                          1,
-                          currentPage),
-                      _buildCategoryButton(context, 'Overdue',
-                          categorizedTasks['overdue']!.length, 2, currentPage),
-                    ],
-                  );
-                },
-              ),
-              SizedBox(
-                height: 2,
-                child: ValueListenableBuilder<int>(
-                  valueListenable: _currentPageNotifier,
-                  builder: (context, currentPage, child) {
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            color: currentPage == 0
-                                ? Theme.of(context).colorScheme.secondary
-                                : Colors.transparent,
-                          ),
-                        ),
-                        Expanded(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            color: currentPage == 1
-                                ? Theme.of(context).colorScheme.secondary
-                                : Colors.transparent,
-                          ),
-                        ),
-                        Expanded(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            color: currentPage == 2
-                                ? Theme.of(context).colorScheme.secondary
-                                : Colors.transparent,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
+              _buildTopContainer(context, categorizedTasks),
               Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    _currentPageNotifier.value = index;
-                  },
-                  children: [
-                    _buildTaskList(categorizedTasks['pending']!, false),
-                    _buildTaskList(categorizedTasks['completed']!, true),
-                    _buildTaskList(categorizedTasks['overdue']!, false,
-                        isOverdue: true),
-                  ],
-                ),
+                child: _buildTaskListContent(categorizedTasks),
               ),
             ],
           ),
@@ -192,42 +89,186 @@ class TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
+  Widget _buildTopContainer(
+      BuildContext context, Map<String, List<Task>> categorizedTasks) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF4B3986) : const Color(0xFFE7DEFD),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(35),
+          bottomRight: Radius.circular(35),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Spacer(),
+                  Expanded(
+                    flex: 2,
+                    child: Center(
+                      child: Text(
+                        'Todo List',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        icon: Icon(
+                          isDarkMode
+                              ? CupertinoIcons.sun_max
+                              : CupertinoIcons.moon,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        onPressed: () {
+                          themeProvider.toggleTheme();
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search tasks',
+                  hintStyle: TextStyle(
+                      color: (isDarkMode ? Colors.white : Colors.black)
+                          .withOpacity(0.7)),
+                  prefixIcon: Icon(CupertinoIcons.search,
+                      color: isDarkMode ? Colors.white : Colors.black),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: (isDarkMode ? Colors.white : Colors.black)
+                      .withOpacity(0.1),
+                ),
+                style:
+                    TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: ValueListenableBuilder<int>(
+                valueListenable: _currentPageNotifier,
+                builder: (context, currentPage, child) {
+                  return Row(
+                    children: [
+                      _buildCategoryButton(context, 'Pending',
+                          categorizedTasks['pending']!.length, 0, currentPage),
+                      _buildCategoryButton(
+                          context,
+                          'Completed',
+                          categorizedTasks['completed']!.length,
+                          1,
+                          currentPage),
+                      _buildCategoryButton(context, 'Overdue',
+                          categorizedTasks['overdue']!.length, 2, currentPage),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskListContent(Map<String, List<Task>> categorizedTasks) {
+    return PageView(
+      controller: _pageController,
+      onPageChanged: (index) {
+        _currentPageNotifier.value = index;
+      },
+      children: [
+        _buildTaskList(categorizedTasks['pending']!, false),
+        _buildTaskList(categorizedTasks['completed']!, true),
+        _buildTaskList(categorizedTasks['overdue']!, false, isOverdue: true),
+      ],
+    );
+  }
+
   Widget _buildCategoryButton(BuildContext context, String title, int count,
       int page, int currentPage) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
     return Expanded(
-      child: TextButton(
-        onPressed: () {
-          _pageController.animateToPage(page,
-              duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-        },
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '$title ',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: currentPage == page
-                      ? Theme.of(context).colorScheme.secondary
-                      : Colors.grey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextButton(
+            onPressed: () {
+              _pageController.animateToPage(page,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut);
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: currentPage == page
+                        ? (isDarkMode ? Colors.white : Colors.black)
+                        : (isDarkMode ? Colors.white70 : Colors.black54),
+                  ),
                 ),
-              ),
-              Text(
-                '($count)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: currentPage == page
-                      ? Theme.of(context).colorScheme.secondary
-                      : Colors.grey,
+                const SizedBox(height: 4),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: currentPage == page
+                        ? (isDarkMode ? Colors.white : Colors.black)
+                        : (isDarkMode ? Colors.white70 : Colors.black54),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 4),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: 3,
+            width: 40,
+            decoration: BoxDecoration(
+              color: currentPage == page
+                  ? (isDarkMode ? Colors.white : Colors.black)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -245,6 +286,7 @@ class TaskListScreenState extends State<TaskListScreen> {
     }
 
     return ListView.builder(
+      padding: EdgeInsets.zero,
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final task = tasks[index];
