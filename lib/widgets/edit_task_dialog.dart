@@ -276,7 +276,7 @@ class EditTaskDialogState extends State<EditTaskDialog> {
 
   void _showDueDateTimePicker() {
     final now = DateTime.now();
-    final initialDate = _dueDateTime ?? now.add(const Duration(hours: 1));
+    final initialDate = _dueDateTime ?? now.add(const Duration(minutes: 45));
     final minimumDate = now.add(const Duration(days: 0));
 
     showCupertinoModalPopup(
