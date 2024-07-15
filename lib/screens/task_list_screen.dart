@@ -25,7 +25,7 @@ class TaskListScreenState extends State<TaskListScreen> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: 0);
+    _pageController = PageController(initialPage: 0, viewportFraction: 1.0);
     Future.microtask(() {
       final taskProvider = Provider.of<TaskProvider>(context, listen: false);
       taskProvider.checkAndUpdateOverdueTasks();
@@ -201,16 +201,23 @@ class TaskListScreenState extends State<TaskListScreen> {
   }
 
   Widget _buildTaskListContent(Map<String, List<Task>> categorizedTasks) {
-    return PageView(
+    return PageView.builder(
       controller: _pageController,
+      itemCount: 3,
       onPageChanged: (index) {
         _currentPageNotifier.value = index;
       },
-      children: [
-        _buildTaskList(categorizedTasks['pending']!, false),
-        _buildTaskList(categorizedTasks['completed']!, true),
-        _buildTaskList(categorizedTasks['overdue']!, false, isOverdue: true),
-      ],
+      itemBuilder: (context, index) {
+        final tasks = index == 0
+            ? categorizedTasks['pending']!
+            : index == 1
+                ? categorizedTasks['completed']!
+                : categorizedTasks['overdue']!;
+        final showCompleted = index == 1;
+        final isOverdue = index == 2;
+
+        return _buildTaskList(tasks, showCompleted, isOverdue: isOverdue);
+      },
     );
   }
 

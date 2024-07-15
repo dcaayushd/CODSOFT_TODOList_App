@@ -11,7 +11,7 @@ class NotificationService {
   Future<void> init() async {
     tz.initializeTimeZones();
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('app_icon');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
@@ -52,7 +52,7 @@ class NotificationService {
       tz.TZDateTime.from(task.dueDate!, tz.local),
       notificationDetails,
       // androidAllowWhileIdle: true,
-      androidScheduleMode: AndroidScheduleMode.exact, 
+      androidScheduleMode: AndroidScheduleMode.exact,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
