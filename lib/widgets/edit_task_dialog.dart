@@ -24,6 +24,7 @@ class EditTaskDialogState extends State<EditTaskDialog> {
   late bool _isPinned;
   bool _hasAlert = false;
   DateTime? _alertDateTime;
+  // late DateTime _initialDueDateTime;
 
   @override
   void initState() {
@@ -33,23 +34,35 @@ class EditTaskDialogState extends State<EditTaskDialog> {
         TextEditingController(text: widget.task.description);
     _selectedCategory = widget.task.category;
     _dueDateTime = widget.task.dueDate;
+    // _initialDueDateTime = widget.task.dueDate ?? DateTime.now();
     _isPinned = widget.task.isPinned;
     _hasAlert = widget.task.hasAlert;
     _alertDateTime = widget.task.alertDateTime;
-    _updateAlertDateTime();
+    if (_hasAlert && _alertDateTime == null) {
+      _updateAlertDateTime();
+    }
   }
 
   void _updateAlertDateTime() {
-    if (_hasAlert && _dueDateTime != null) {
+    if (_dueDateTime != null) {
       final now = DateTime.now();
-      final thirtyMinutesBeforeDue =
-          _dueDateTime!.subtract(const Duration(minutes: 30));
-      if (thirtyMinutesBeforeDue.isAfter(now)) {
-        _alertDateTime = thirtyMinutesBeforeDue;
+      if (_dueDateTime!.isAfter(now)) {
+        final timeDifference = _dueDateTime!.difference(now);
+        if (timeDifference.inMinutes > 30) {
+          _alertDateTime = _dueDateTime!.subtract(const Duration(minutes: 30));
+        } else {
+          _alertDateTime = now.add(const Duration(minutes: 1));
+        }
       } else {
-        _alertDateTime = now;
+        _alertDateTime = null;
+        _hasAlert = false;
       }
     }
+  }
+
+  bool _canChangeAlertTime() {
+    final now = DateTime.now();
+    return _dueDateTime != null && _dueDateTime!.isAfter(now);
   }
 
   @override
@@ -178,7 +191,14 @@ class EditTaskDialogState extends State<EditTaskDialog> {
                   onChanged: (value) {
                     setState(() {
                       _hasAlert = value;
-                      _updateAlertDateTime();
+                      if (_hasAlert && _alertDateTime == null) {
+                        _updateAlertDateTime();
+                      }
+                      if (_hasAlert && _canChangeAlertTime()) {
+                        _showAlertDateTimePicker();
+                      } else if (_hasAlert) {
+                        _showChangeDueDateFirstDialog();
+                      }
                     });
                   },
                 ),
@@ -197,7 +217,9 @@ class EditTaskDialogState extends State<EditTaskDialog> {
                   Expanded(
                     child: CupertinoButton(
                       padding: EdgeInsets.zero,
-                      onPressed: _showAlertDateTimePicker,
+                      onPressed: _canChangeAlertTime()
+                          ? _showAlertDateTimePicker
+                          : _showChangeDueDateFirstDialog,
                       child: Text(_alertDateTime == null
                           ? 'Select Date'
                           : DateFormat('MMM d, y').format(_alertDateTime!)),
@@ -206,7 +228,9 @@ class EditTaskDialogState extends State<EditTaskDialog> {
                   Expanded(
                     child: CupertinoButton(
                       padding: EdgeInsets.zero,
-                      onPressed: _showAlertDateTimePicker,
+                      onPressed: _canChangeAlertTime()
+                          ? _showAlertDateTimePicker
+                          : _showChangeDueDateFirstDialog,
                       child: Text(_alertDateTime == null
                           ? 'Select Time'
                           : DateFormat('h:mm a').format(_alertDateTime!)),
@@ -277,13 +301,55 @@ class EditTaskDialogState extends State<EditTaskDialog> {
   void _showDueDateTimePicker() {
     final now = DateTime.now();
     final initialDate = _dueDateTime ?? now.add(const Duration(minutes: 45));
-    final minimumDate = now.add(const Duration(days: 0));
+    final minimumDate = now.add(const Duration(minutes: 1));
 
     setState(() {
       _dueDateTime =
           initialDate.isAfter(minimumDate) ? initialDate : minimumDate;
-      _updateAlertDateTime();
+      if (_hasAlert && _alertDateTime == null) {
+        _updateAlertDateTime();
+      }
     });
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => Container(
+        height: 216,
+        padding: const EdgeInsets.only(top: 6.0),
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: SafeArea(
+          top: false,
+          child: CupertinoDatePicker(
+            initialDateTime: _dueDateTime,
+            minimumDate: minimumDate,
+            mode: CupertinoDatePickerMode.dateAndTime,
+            use24hFormat: false,
+            onDateTimeChanged: (DateTime newDateTime) {
+              setState(() {
+                _dueDateTime = newDateTime;
+                if (_hasAlert) {
+                  _updateAlertDateTime();
+                }
+              });
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAlertDateTimePicker() {
+    if (!_canChangeAlertTime()) {
+      _showChangeDueDateFirstDialog();
+      return;
+    }
+
+    final now = DateTime.now();
+    final minimumDate = now.add(const Duration(minutes: 1));
+    final initialDate = _alertDateTime ?? minimumDate;
 
     showCupertinoModalPopup(
       context: context,
@@ -298,46 +364,9 @@ class EditTaskDialogState extends State<EditTaskDialog> {
           top: false,
           child: CupertinoDatePicker(
             initialDateTime:
-                // initialDate.isAfter(minimumDate) ? initialDate : minimumDate,
-                _dueDateTime,
-            minimumDate: minimumDate,
-            mode: CupertinoDatePickerMode.dateAndTime,
-            use24hFormat: false,
-            onDateTimeChanged: (DateTime newDateTime) {
-              setState(() {
-                _dueDateTime = newDateTime;
-                _updateAlertDateTime();
-              });
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showAlertDateTimePicker() {
-    final now = DateTime.now();
-    final initialDate = _alertDateTime ?? now.add(const Duration(minutes: 30));
-
-    setState(() {
-      _alertDateTime = initialDate;
-    });
-
-    showCupertinoModalPopup(
-      context: context,
-      builder: (BuildContext context) => Container(
-        height: 216,
-        padding: const EdgeInsets.only(top: 6.0),
-        margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        color: CupertinoColors.systemBackground.resolveFrom(context),
-        child: SafeArea(
-          top: false,
-          child: CupertinoDatePicker(
-            initialDateTime: _alertDateTime,
+                initialDate.isAfter(minimumDate) ? initialDate : minimumDate,
             maximumDate: _dueDateTime,
-            minimumDate: now,
+            minimumDate: minimumDate,
             mode: CupertinoDatePickerMode.dateAndTime,
             use24hFormat: false,
             onDateTimeChanged: (DateTime newDateTime) {
@@ -347,6 +376,23 @@ class EditTaskDialogState extends State<EditTaskDialog> {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  void _showChangeDueDateFirstDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cannot Change Alert Time'),
+        content: const Text(
+            'Please change the due date first before modifying the alert time.'),
+        actions: [
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
       ),
     );
   }
