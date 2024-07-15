@@ -1,5 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -279,6 +279,12 @@ class EditTaskDialogState extends State<EditTaskDialog> {
     final initialDate = _dueDateTime ?? now.add(const Duration(minutes: 45));
     final minimumDate = now.add(const Duration(days: 0));
 
+    setState(() {
+      _dueDateTime =
+          initialDate.isAfter(minimumDate) ? initialDate : minimumDate;
+      _updateAlertDateTime();
+    });
+
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => Container(
@@ -292,7 +298,8 @@ class EditTaskDialogState extends State<EditTaskDialog> {
           top: false,
           child: CupertinoDatePicker(
             initialDateTime:
-                initialDate.isAfter(minimumDate) ? initialDate : minimumDate,
+                // initialDate.isAfter(minimumDate) ? initialDate : minimumDate,
+                _dueDateTime,
             minimumDate: minimumDate,
             mode: CupertinoDatePickerMode.dateAndTime,
             use24hFormat: false,
@@ -312,6 +319,10 @@ class EditTaskDialogState extends State<EditTaskDialog> {
     final now = DateTime.now();
     final initialDate = _alertDateTime ?? now.add(const Duration(minutes: 30));
 
+    setState(() {
+      _alertDateTime = initialDate;
+    });
+
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => Container(
@@ -324,7 +335,7 @@ class EditTaskDialogState extends State<EditTaskDialog> {
         child: SafeArea(
           top: false,
           child: CupertinoDatePicker(
-            initialDateTime: initialDate,
+            initialDateTime: _alertDateTime,
             maximumDate: _dueDateTime,
             minimumDate: now,
             mode: CupertinoDatePickerMode.dateAndTime,
