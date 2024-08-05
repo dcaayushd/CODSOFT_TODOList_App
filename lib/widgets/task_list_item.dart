@@ -198,7 +198,6 @@ class TaskListItemState extends State<TaskListItem>
         duration: const Duration(milliseconds: 200),
         margin: EdgeInsets.only(
           top: _isShifted ? 50 : 0,
-          bottom: 8,
         ),
         child: Container(
           decoration: BoxDecoration(

@@ -293,8 +293,6 @@ class TaskListScreenState extends State<TaskListScreen> {
     }
 
     return ListView.builder(
-      // padding: EdgeInsets.zero,
-      // padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       itemCount: tasks.length,
       itemBuilder: (context, index) {
