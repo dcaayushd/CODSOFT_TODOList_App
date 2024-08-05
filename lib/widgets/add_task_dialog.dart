@@ -250,9 +250,7 @@ class AddTaskDialogState extends State<AddTaskDialog> {
 
   void _showDueDateTimePicker() {
     final now = DateTime.now();
-    setState(() {
-      _dueDateTime = now.add(const Duration(hours: 1));
-    });
+    final initialDateTime = _dueDateTime ?? now.add(const Duration(hours: 1));
 
     showCupertinoModalPopup(
       context: context,
@@ -266,7 +264,7 @@ class AddTaskDialogState extends State<AddTaskDialog> {
         child: SafeArea(
           top: false,
           child: CupertinoDatePicker(
-            initialDateTime: _dueDateTime,
+            initialDateTime: initialDateTime,
             minimumDate: now,
             mode: CupertinoDatePickerMode.dateAndTime,
             use24hFormat: false,
@@ -283,11 +281,10 @@ class AddTaskDialogState extends State<AddTaskDialog> {
 
   void _showAlertDateTimePicker() {
     final now = DateTime.now();
-    setState(() {
-      _alertDateTime = _dueDateTime != null
-          ? _dueDateTime!.subtract(const Duration(minutes: 30))
-          : now.add(const Duration(minutes: 30));
-    });
+    final initialDateTime = _alertDateTime ??
+        (_dueDateTime != null
+            ? _dueDateTime!.subtract(const Duration(minutes: 30))
+            : now.add(const Duration(minutes: 30)));
 
     showCupertinoModalPopup(
       context: context,
@@ -301,7 +298,7 @@ class AddTaskDialogState extends State<AddTaskDialog> {
         child: SafeArea(
           top: false,
           child: CupertinoDatePicker(
-            initialDateTime: _alertDateTime,
+            initialDateTime: initialDateTime,
             maximumDate: _dueDateTime,
             minimumDate: now,
             mode: CupertinoDatePickerMode.dateAndTime,
