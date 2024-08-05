@@ -17,7 +17,7 @@ A feature-rich and visually appealing Todo List application built with Flutter.
 
 ## Screenshots
 
-[Insert screenshots of your app here]
+![App SS](screenshots/app_ss.jpg)
 
 ## Getting Started
 
